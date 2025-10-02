@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mizzanine CRM - {{ company.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">Mizzanine - {{ company.name }}</h1>
+            <div class="nav-info">
+                <span class="user-info">
+                    {% if session.user_type == 'employee' %}
+                        {{ company.employees[session.employee_id].name }} ({{ session.role|title }})
+                    {% else %}
+                        Company Admin
+                    {% endif %}
+                </span>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="crm-container">
+        <div class="sidebar">
+            <div class="sidebar-menu">
+                <button class="menu-btn active" onclick="showSection('dashboard')">Dashboard</button>
+                <button class="menu-btn" onclick="showSection('products')">My Products</button>
+                {% if user_role in ['manager', 'purchase'] or session.user_type == 'company' %}
+                <button class="menu-btn" onclick="showSection('marketplace')">Marketplace</button>
+                {% endif %}
+                {% if user_role == 'manager' or session.user_type == 'company' %}
+                <button class="menu-btn" onclick="showSection('employees')">Employees</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="content-section active">
+                <h2>Dashboard Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Products</h3>
+                        <p class="stat-number">{{ products|length }}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Low Stock Items</h3>
+                        <p class="stat-number">
+                            {% set low_stock_count = 0 %}
+                            {% for product in products %}
+                                {% if product.quantity <= product.min_quantity %}
+                                    {% set low_stock_count = low_stock_count + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ low_stock_count }}
+                        </p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Employees</h3>
+                        <p class="stat-number">{{ company.employees|length }}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Your Role</h3>
+                        <p class="stat-text">
+                            {% if session.user_type == 'employee' %}
+                                {{ session.role|title }}
+                            {% else %}
+                                Admin
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        {% if user_role in ['manager', 'sales'] or session.user_type == 'company' %}
+                        <button class="btn btn-primary" onclick="showAddProductModal()">Add New Product</button>
+                        {% endif %}
+                        {% if user_role == 'manager' or session.user_type == 'company' %}
+                        <button class="btn btn-secondary" onclick="showAddEmployeeModal()">Add Employee</button>
+                        {% endif %}
+                        <button class="btn btn-info" onclick="showSection('marketplace')">Browse Marketplace</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div id="products" class="content-section">
+                <div class="section-header">
+                    <h2>My Products</h2>
+                    {% if user_role in ['manager', 'sales'] or session.user_type == 'company' %}
+                    <button class="btn btn-primary" onclick="showAddProductModal()">Add Product</button>
+                    {% endif %}
+                </div>
+                <div class="products-grid" id="products-grid">
+                    {% for product in products %}
+                    <div class="product-card">
+                        <img src="{{ product.image }}" alt="{{ product.title }}" class="product-image">
+                        <div class="product-info">
+                            <h3>{{ product.title }}</h3>
+                            <p>{{ product.description }}</p>
+                            <div class="product-details">
+                                <span class="product-price">${{ "%.2f"|format(product.price) }}</span>
+                                <span class="product-stock {% if product.quantity <= product.min_quantity %}low-stock{% endif %}">
+                                    {{ product.quantity }} in stock
+                                </span>
+                            </div>
+                            <span class="product-category">{{ product.category }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Marketplace Section -->
+            {% if user_role in ['manager', 'purchase'] or session.user_type == 'company' %}
+            <div id="marketplace" class="content-section">
+                <h2>Marketplace - Other Companies' Products</h2>
+                <div class="products-grid">
+                    {% for product in other_products %}
+                    <div class="product-card marketplace-product">
+                        <img src="{{ product.image }}" alt="{{ product.title }}" class="product-image">
+                        <div class="product-info">
+                            <h3>{{ product.title }}</h3>
+                            <p>{{ product.description }}</p>
+                            <div class="product-details">
+                                <span class="product-price">${{ "%.2f"|format(product.price) }}</span>
+                                <span class="product-stock">{{ product.quantity }} available</span>
+                            </div>
+                            <p class="product-company">by {{ product.company }}</p>
+                            <div class="product-actions">
+                                {% if user_role == 'purchase' %}
+                                <div class="quantity-selector">
+                                    <label for="crm-qty-{{ product.id }}">Quantity:</label>
+                                    <input type="number" id="crm-qty-{{ product.id }}" min="1" max="{{ product.quantity }}" value="1" class="quantity-input">
+                                </div>
+                                {% endif %}
+                                <button class="btn btn-secondary" onclick="contactSeller('{{ product.company_id }}', '{{ product.title }}')">
+                                    Contact Seller
+                                </button>
+                                {% if user_role == 'purchase' %}
+                                <button class="btn btn-primary" onclick="buyProductCRM('{{ product.company_id }}', {{ product.id }}, '{{ product.title }}', {{ product.price }})">
+                                    Buy with Torbiona
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Employees Section -->
+            {% if user_role == 'manager' or session.user_type == 'company' %}
+            <div id="employees" class="content-section">
+                <div class="section-header">
+                    <h2>Employee Management</h2>
+                    <button class="btn btn-primary" onclick="showAddEmployeeModal()">Add Employee</button>
+                </div>
+                <div class="employees-grid">
+                    {% for emp_id, employee in company.employees.items() %}
+                    <div class="employee-card">
+                        <h3>{{ employee.name }}</h3>
+                        <p class="employee-role">{{ employee.role|title }}</p>
+                        <p class="employee-id">ID: {{ emp_id }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addProductModal')">&times;</span>
+            <h2>Add New Product</h2>
+            <form id="addProductForm">
+                <div class="form-group">
+                    <label for="productTitle">Product Title</label>
+                    <input type="text" id="productTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Description</label>
+                    <textarea id="productDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="productImage">Image URL</label>
+                    <input type="url" id="productImage" placeholder="https://example.com/image.jpg">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productQuantity">Quantity</label>
+                        <input type="number" id="productQuantity" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productMinQuantity">Min Quantity</label>
+                        <input type="number" id="productMinQuantity" min="0" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productPrice">Price ($)</label>
+                        <input type="number" id="productPrice" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productCategory">Category</label>
+                        <input type="text" id="productCategory" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Product</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Employee Modal -->
+    <div id="addEmployeeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addEmployeeModal')">&times;</span>
+            <h2>Add New Employee</h2>
+            <form id="addEmployeeForm">
+                <div class="form-group">
+                    <label for="employeeName">Employee Name</label>
+                    <input type="text" id="employeeName" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeId">Employee ID</label>
+                    <input type="text" id="employeeId" placeholder="e.g., john_sales" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeRole">Role</label>
+                    <select id="employeeRole" required>
+                        <option value="">Select Role</option>
+                        <option value="manager">Manager</option>
+                        <option value="sales">Sales</option>
+                        <option value="purchase">Purchase</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="employeePassword">Password</label>
+                    <input type="password" id="employeePassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Employee</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t.site_name }} - Construction Marketplace</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">{{ t.site_name }}</h1>
+            <div class="nav-links">
+                <button onclick="switchLanguage('{{ 'ar' if lang == 'en' else 'en' }}')" class="btn btn-lang">
+                    {{ 'العربية' if lang == 'en' else 'English' }}
+                </button>
+                <a href="{{ url_for('login') }}" class="btn btn-primary">{{ t.login }}</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero-section">
+        <div class="container">
+            <h1>{{ t.welcome }}</h1>
+            <p>{{ t.subtitle }}</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <section class="companies-section">
+            <h2>{{ t.partners }}</h2>
+            <div class="companies-grid">
+                {% for company_id, company in companies.items() %}
+                <div class="company-card">
+                    <h3>{{ company.name }}</h3>
+                    <p class="company-industry">{{ company.industry }}</p>
+                    <p class="product-count">{{ products[company_id]|length if products[company_id] else 0 }} Products Available</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="products-section">
+            <h2>{{ t.featured }}</h2>
+            <div class="products-grid">
+                {% for product in products %}
+                <div class="product-card">
+                    <img src="{{ product.image }}" alt="{{ product.title }}" class="product-image">
+                    <div class="product-info">
+                        <h3>{{ product.title }}</h3>
+                        <p class="product-description">{{ product.description }}</p>
+                        <div class="product-details">
+                            <span class="product-price">${{ "%.2f"|format(product.price) }}</span>
+                            <span class="product-stock">{{ product.quantity }} {{ t.in_stock }}</span>
+                        </div>
+                        <p class="product-company">{{ t.by }} {{ product.company }}</p>
+                        <div class="product-actions">
+                            <div class="quantity-selector">
+                                <label for="qty-{{ product.id }}">{{ t.quantity }}:</label>
+                                <input type="number" id="qty-{{ product.id }}" min="1" max="{{ product.quantity }}" value="1" class="quantity-input">
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-secondary" onclick="openChat('{{ product.company_id }}', '{{ product.title }}')">
+                                    {{ t.contact_seller }}
+                                </button>
+                                <button class="btn btn-primary" onclick="buyNow('{{ product.company_id }}', {{ product.id }}, '{{ product.title }}', {{ product.price }})">
+                                    {{ t.buy_now }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 {{ t.site_name }} Construction Marketplace. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function buyNow(companyId, productId, productTitle, price) {
+            const quantityInput = document.getElementById(`qty-${productId}`);
+            const quantity = parseInt(quantityInput.value);
+            
+            if (quantity && quantity > 0) {
+                const totalPrice = (parseFloat(price) * quantity).toFixed(2);
+                
+                // Show Torbiona payment modal
+                showTorbionePayment({
+                    companyId: companyId,
+                    productId: productId,
+                    productTitle: productTitle,
+                    quantity: quantity,
+                    unitPrice: price,
+                    totalPrice: totalPrice
+                });
+            } else {
+                alert('Please select a valid quantity.');
+            }
+        }
+        
+        function showTorbionePayment(orderData) {
+            const modal = document.createElement('div');
+            modal.className = 'torbiona-modal';
+            modal.innerHTML = `
+                <div class="torbiona-modal-content">
+                    <span class="close" onclick="closeTorbioneModal()">&times;</span>
+                    <div class="torbiona-header">
+                        <h2>🔒 Secure Payment with Torbiona</h2>
+                        <p>Complete your purchase securely</p>
+                    </div>
+                    
+                    <div class="order-summary">
+                        <h3>Order Summary</h3>
+                        <div class="order-item">
+                            <span class="item-name">${orderData.productTitle}</span>
+                            <span class="item-details">Qty: ${orderData.quantity} × $${orderData.unitPrice}</span>
+                            <span class="item-total">$${orderData.totalPrice}</span>
+                        </div>
+                        <div class="order-total">
+                            <strong>Total: $${orderData.totalPrice}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="torbiona-payment">
+                        <h3>Payment Method</h3>
+                        <div class="payment-options">
+                            <label class="payment-option">
+                                <input type="radio" name="payment" value="torbiona-wallet" checked>
+                                <span class="payment-icon">💳</span>
+                                <span>Torbiona Wallet</span>
+                            </label>
+                            <label class="payment-option">
+                                <input type="radio" name="payment" value="torbiona-card">
+                                <span class="payment-icon">🏦</span>
+                                <span>Credit/Debit Card via Torbiona</span>
+                            </label>
+                            <label class="payment-option">
+                                <input type="radio" name="payment" value="torbiona-crypto">
+                                <span class="payment-icon">₿</span>
+                                <span>Cryptocurrency via Torbiona</span>
+                            </label>
+                        </div>
+                        
+                        <div class="torbiona-security">
+                            <p>🛡️ Protected by Torbiona's advanced security</p>
+                            <p>✅ 256-bit SSL encryption</p>
+                            <p>🔐 Two-factor authentication</p>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-full" onclick="processTorbionePayment(${JSON.stringify(orderData).replace(/"/g, '&quot;')})">
+                            Complete Purchase with Torbiona
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+        
+        function closeTorbioneModal() {
+            const modal = document.querySelector('.torbiona-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function processTorbionePayment(orderData) {
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+            
+            // Show processing animation
+            const button = event.target;
+            button.innerHTML = '🔄 Processing with Torbiona...';
+            button.disabled = true;
+            
+            // Simulate Torbiona payment processing
+            setTimeout(() => {
+                // Simulate successful payment
+                fetch('/api/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        company_id: orderData.companyId,
+                        product_id: orderData.productId,
+                        quantity: orderData.quantity,
+                        payment_method: paymentMethod,
+                        total_amount: orderData.totalPrice
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    closeTorbioneModal();
+                    if (data.success) {
+                        showSuccessModal(orderData, paymentMethod);
+                        // Update quantity display
+                        location.reload();
+                    } else {
+                        alert('Payment failed: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    closeTorbioneModal();
+                    alert('Payment processing error. Please try again.');
+                });
+            }, 2000);
+        }
+        
+        function showSuccessModal(orderData, paymentMethod) {
+            const modal = document.createElement('div');
+            modal.className = 'success-modal';
+            modal.innerHTML = `
+                <div class="success-modal-content">
+                    <div class="success-header">
+                        <div class="success-icon">✅</div>
+                        <h2>Payment Successful!</h2>
+                        <p>Your order has been confirmed</p>
+                    </div>
+                    
+                    <div class="success-details">
+                        <h3>Order Confirmation</h3>
+                        <p><strong>Product:</strong> ${orderData.productTitle}</p>
+                        <p><strong>Quantity:</strong> ${orderData.quantity}</p>
+                        <p><strong>Total Paid:</strong> $${orderData.totalPrice}</p>
+                        <p><strong>Payment Method:</strong> ${paymentMethod.replace('-', ' ').toUpperCase()}</p>
+                        <p><strong>Transaction ID:</strong> TRB-${Date.now()}</p>
+                    </div>
+                    
+                    <div class="success-actions">
+                        <button class="btn btn-primary" onclick="closeSuccessModal()">
+                            Continue Shopping
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+        
+        function closeSuccessModal() {
+            const modal = document.querySelector('.success-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function openChat(companyId, productTitle) {
+            window.open(`/chat/${companyId}/${encodeURIComponent(productTitle)}`, '_blank', 'width=400,height=600');
+        }
+        
+        function switchLanguage(lang) {
+            window.location.href = `/${lang}`;
+        }
+    </script>
+</body>
+</html>

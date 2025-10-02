@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Mizzanine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo"><a href="{{ url_for('index') }}">Mizzanine</a></h1>
+        </div>
+    </nav>
+
+    <div class="login-container">
+        <div class="login-card">
+            <h2>Login to Mizzanine</h2>
+            
+            {% if error %}
+            <div class="error-message">{{ error }}</div>
+            {% endif %}
+
+            <div class="login-tabs">
+                <button class="tab-btn active" onclick="showTab('company')">Company Login</button>
+                <button class="tab-btn" onclick="showTab('employee')">Employee Login</button>
+            </div>
+
+            <!-- Company Login Form -->
+            <form id="company-form" class="login-form active" method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label for="company_id">Company</label>
+                    <select name="company_id" id="company_id" required>
+                        <option value="">Select Company</option>
+                        {% for company_id, company in companies.items() %}
+                        <option value="{{ company_id }}">{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="password">Company Password</label>
+                    <input type="password" name="password" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Login as Company Admin</button>
+            </form>
+
+            <!-- Employee Login Form -->
+            <form id="employee-form" class="login-form" method="POST" action="{{ url_for('employee_login') }}">
+                <div class="form-group">
+                    <label for="emp_company_id">Company</label>
+                    <select name="company_id" id="emp_company_id" required>
+                        <option value="">Select Company</option>
+                        {% for company_id, company in companies.items() %}
+                        <option value="{{ company_id }}">{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="employee_id">Employee ID</label>
+                    <input type="text" name="employee_id" id="employee_id" placeholder="e.g., john_manager" required>
+                </div>
+                <div class="form-group">
+                    <label for="emp_password">Password</label>
+                    <input type="password" name="password" id="emp_password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Login as Employee</button>
+            </form>
+
+            <div class="demo-accounts">
+                <h3>Demo Accounts</h3>
+                <div class="demo-section">
+                    <h4>Company Logins:</h4>
+                    <ul>
+                        <li><strong>BuildTech Construction:</strong> techcorp / tech123</li>
+                        <li><strong>Global Materials:</strong> globaltech / global123</li>
+                        <li><strong>ProBuild Equipment:</strong> innovate / innovate123</li>
+                    </ul>
+                </div>
+                <div class="demo-section">
+                    <h4>Employee Logins (BuildTech):</h4>
+                    <ul>
+                        <li><strong>Manager:</strong> john_manager / john123</li>
+                        <li><strong>Sales:</strong> sarah_sales / sarah123</li>
+                        <li><strong>Purchase:</strong> mike_purchase / mike123</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all forms
+            document.querySelectorAll('.login-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected form and activate tab
+            if (tabName === 'company') {
+                document.getElementById('company-form').classList.add('active');
+                document.querySelector('.tab-btn').classList.add('active');
+            } else {
+                document.getElementById('employee-form').classList.add('active');
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
