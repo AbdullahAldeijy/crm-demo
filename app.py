@@ -24,11 +24,11 @@ translations = {
         'site_name': 'ميزانين',
         'welcome': 'مرحباً بكم في ميزانين',
         'subtitle': 'منصتكم الرائدة لسوق البناء والمقاولات',
-        'partners': 'شركاؤنا في البناء',
+        'partners': 'الشركات',
         'featured': 'منتجات البناء المميزة',
         'login': 'تسجيل دخول الشركة',
         'contact_seller': 'تواصل مع البائع',
-        'buy_now': 'اشتري بـ تورbiونا',
+        'buy_now': 'توربيونا',
         'quantity': 'الكمية',
         'in_stock': 'متوفر',
         'by': 'من'
@@ -370,6 +370,23 @@ def api_chat(chat_id):
         return jsonify({'success': True})
     
     return jsonify(chat_messages.get(chat_id, []))
+
+@app.route('/torbiona-calculator')
+def torbiona_calculator():
+    import random
+    order_data = request.args.get('order')
+    lang = session.get('language', 'en')
+    
+    # Random approval (60% chance)
+    approved = random.random() < 0.6
+    score = random.randint(45, 95)
+    
+    return render_template('torbiona_calculator.html', 
+                         approved=approved, 
+                         score=score,
+                         order_data=order_data,
+                         lang=lang, 
+                         t=translations[lang])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

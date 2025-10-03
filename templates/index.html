@@ -130,19 +130,14 @@
                         <h3>Payment Method</h3>
                         <div class="payment-options">
                             <label class="payment-option">
-                                <input type="radio" name="payment" value="torbiona-wallet" checked>
+                                <input type="radio" name="payment" value="torbiona" checked>
+                                <span class="payment-icon">🔒</span>
+                                <span>Torbiona</span>
+                            </label>
+                            <label class="payment-option">
+                                <input type="radio" name="payment" value="pay-now">
                                 <span class="payment-icon">💳</span>
-                                <span>Torbiona Wallet</span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="payment" value="torbiona-card">
-                                <span class="payment-icon">🏦</span>
-                                <span>Credit/Debit Card via Torbiona</span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="payment" value="torbiona-crypto">
-                                <span class="payment-icon">₿</span>
-                                <span>Cryptocurrency via Torbiona</span>
+                                <span>Pay Now</span>
                             </label>
                         </div>
                         
@@ -173,43 +168,40 @@
         function processTorbionePayment(orderData) {
             const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
             
-            // Show processing animation
-            const button = event.target;
-            button.innerHTML = '🔄 Processing with Torbiona...';
-            button.disabled = true;
-            
-            // Simulate Torbiona payment processing
-            setTimeout(() => {
-                // Simulate successful payment
-                fetch('/api/purchase', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        company_id: orderData.companyId,
-                        product_id: orderData.productId,
-                        quantity: orderData.quantity,
-                        payment_method: paymentMethod,
-                        total_amount: orderData.totalPrice
+            if (paymentMethod === 'torbiona') {
+                // Redirect to Torbiona calculator
+                closeTorbioneModal();
+                window.location.href = `/torbiona-calculator?order=${encodeURIComponent(JSON.stringify(orderData))}`;
+            } else {
+                // Process Pay Now immediately
+                const button = event.target;
+                button.innerHTML = '🔄 Processing Payment...';
+                button.disabled = true;
+                
+                setTimeout(() => {
+                    fetch('/api/purchase', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            company_id: orderData.companyId,
+                            product_id: orderData.productId,
+                            quantity: orderData.quantity,
+                            payment_method: 'pay-now',
+                            total_amount: orderData.totalPrice
+                        })
                     })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    closeTorbioneModal();
-                    if (data.success) {
-                        showSuccessModal(orderData, paymentMethod);
-                        // Update quantity display
-                        location.reload();
-                    } else {
-                        alert('Payment failed: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    closeTorbioneModal();
-                    alert('Payment processing error. Please try again.');
-                });
-            }, 2000);
+                    .then(response => response.json())
+                    .then(data => {
+                        closeTorbioneModal();
+                        if (data.success) {
+                            showSuccessModal(orderData, 'pay-now');
+                            location.reload();
+                        } else {
+                            alert('Payment failed: ' + data.message);
+                        }
+                    });
+                }, 1500);
+            }
         }
         
         function showSuccessModal(orderData, paymentMethod) {

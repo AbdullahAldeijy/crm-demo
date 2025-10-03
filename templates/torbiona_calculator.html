@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torbiona Calculator - {{ t.site_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .calculator-container { max-width: 600px; margin: 2rem auto; padding: 2rem; }
+        .calculator-header { text-align: center; margin-bottom: 2rem; }
+        .score-display { font-size: 3rem; font-weight: bold; margin: 1rem 0; }
+        .score-approved { color: #28a745; }
+        .score-declined { color: #dc3545; }
+        .progress-bar { width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; margin: 1rem 0; }
+        .progress-fill { height: 100%; transition: width 2s ease; }
+        .approved { background: linear-gradient(90deg, #28a745, #20c997); }
+        .declined { background: linear-gradient(90deg, #dc3545, #fd7e14); }
+        .result-message { padding: 1.5rem; border-radius: 10px; margin: 1.5rem 0; text-align: center; }
+        .result-approved { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .result-declined { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .action-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">{{ t.site_name }}</h1>
+        </div>
+    </nav>
+
+    <div class="calculator-container">
+        <div class="calculator-header">
+            <h1>🔍 Torbiona Credit Calculator</h1>
+            <p>{{ 'تقييم أهليتك للدفع عبر توربيونا' if lang == 'ar' else 'Evaluating your Torbiona payment eligibility' }}</p>
+        </div>
+
+        <div class="card" style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <h3>{{ 'تحليل تاريخ الشركة' if lang == 'ar' else 'Company History Analysis' }}</h3>
+            
+            <div class="analysis-item">
+                <span>{{ 'معدل الدفع في الوقت المحدد' if lang == 'ar' else 'On-time Payment Rate' }}</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ score * 0.8 }}%; background: #17a2b8;"></div>
+                </div>
+                <span>{{ (score * 0.8)|round }}%</span>
+            </div>
+
+            <div class="analysis-item" style="margin: 1rem 0;">
+                <span>{{ 'حجم المعاملات' if lang == 'ar' else 'Transaction Volume' }}</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ score * 0.9 }}%; background: #6f42c1;"></div>
+                </div>
+                <span>{{ (score * 0.9)|round }}%</span>
+            </div>
+
+            <div class="analysis-item">
+                <span>{{ 'التقييم الائتماني' if lang == 'ar' else 'Credit Rating' }}</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ score }}%; background: {{ '#28a745' if approved else '#dc3545' }};"></div>
+                </div>
+                <span>{{ score }}%</span>
+            </div>
+
+            <div class="score-display {{ 'score-approved' if approved else 'score-declined' }}">
+                {{ score }}%
+            </div>
+
+            {% if approved %}
+            <div class="result-message result-approved">
+                <h3>✅ {{ 'تم الموافقة!' if lang == 'ar' else 'Approved!' }}</h3>
+                <p>{{ 'تهانينا! أنت مؤهل للدفع عبر توربيونا' if lang == 'ar' else 'Congratulations! You are eligible for Torbiona payment method.' }}</p>
+                <p><strong>{{ 'حد الائتمان المتاح' if lang == 'ar' else 'Available Credit Limit' }}: $50,000</strong></p>
+            </div>
+            {% else %}
+            <div class="result-message result-declined">
+                <h3>❌ {{ 'غير مؤهل حالياً' if lang == 'ar' else 'Not Eligible Currently' }}</h3>
+                <p>{{ 'عذراً، لا يمكنك استخدام توربيونا حالياً. يرجى استخدام الدفع الفوري.' if lang == 'ar' else 'Sorry, you cannot use Torbiona payment method now. Please use Pay Now method.' }}</p>
+                <p><strong>{{ 'النتيجة المطلوبة: 60%' if lang == 'ar' else 'Required Score: 60%' }}</strong></p>
+            </div>
+            {% endif %}
+
+            <div class="action-buttons">
+                {% if approved %}
+                <button class="btn btn-primary" onclick="proceedWithTorbiona()">
+                    {{ 'متابعة بتوربيونا' if lang == 'ar' else 'Proceed with Torbiona' }}
+                </button>
+                {% endif %}
+                <button class="btn btn-secondary" onclick="usePayNow()">
+                    {{ 'الدفع الفوري' if lang == 'ar' else 'Use Pay Now' }}
+                </button>
+                <button class="btn btn-info" onclick="goBack()">
+                    {{ 'العودة' if lang == 'ar' else 'Go Back' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const orderData = {{ order_data|safe }};
+        const approved = {{ 'true' if approved else 'false' }};
+
+        function proceedWithTorbiona() {
+            if (approved) {
+                // Process Torbiona payment
+                fetch('/api/purchase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        company_id: orderData.companyId,
+                        product_id: orderData.productId,
+                        quantity: orderData.quantity,
+                        payment_method: 'torbiona',
+                        total_amount: orderData.totalPrice
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('{{ "تم الدفع بنجاح عبر توربيونا!" if lang == "ar" else "Payment successful via Torbiona!" }}');
+                        window.close();
+                    }
+                });
+            }
+        }
+
+        function usePayNow() {
+            // Process immediate payment
+            fetch('/api/purchase', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    company_id: orderData.companyId,
+                    product_id: orderData.productId,
+                    quantity: orderData.quantity,
+                    payment_method: 'pay-now',
+                    total_amount: orderData.totalPrice
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('{{ "تم الدفع بنجاح!" if lang == "ar" else "Payment successful!" }}');
+                    window.close();
+                }
+            });
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Animate progress bars on load
+        window.addEventListener('load', () => {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>
