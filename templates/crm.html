@@ -1,25 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mizzanine CRM - {{ company.name }}</title>
+    <title>{{ t.site_name }} CRM - {{ company.name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="{% if lang == 'ar' %}rtl{% endif %}">
     <nav class="navbar">
         <div class="nav-container">
-            
-            <h1 class="nav-logo">Mizzanine - {{ company.name }}</h1>
+            <h1 class="nav-logo"><a href="{{ url_for('index') }}">{{ t.site_name }}</a> - {{ company.name }}</h1>
             <div class="nav-info">
+                <div class="nav-buttons">
+                    <a href="{{ url_for('index') }}" class="btn btn-info">{{ t.main_platform }}</a>
+                    <div class="nav-controls">
+                        <button onclick="showNotifications()" class="btn btn-notification" title="Notifications">
+                            🔔
+                            <span class="notification-badge" id="notificationBadge">3</span>
+                        </button>
+                        <button onclick="toggleDarkMode()" class="btn btn-dark-toggle" title="Toggle Dark Mode">
+                            <span class="dark-icon">🌙</span>
+                            <span class="light-icon">☀️</span>
+                        </button>
+                        <div class="language-switcher">
+                            <a href="{{ url_for('crm_dashboard', lang='en') }}" class="lang-btn {% if lang == 'en' %}active{% endif %}">EN</a>
+                            <a href="{{ url_for('crm_dashboard', lang='ar') }}" class="lang-btn {% if lang == 'ar' %}active{% endif %}">عربي</a>
+                        </div>
+                    </div>
+                </div>
                 <span class="user-info">
                     {% if session.user_type == 'employee' %}
                         {{ company.employees[session.employee_id].name }} ({{ session.role|title }})
                     {% else %}
-                        Company Admin
+                        {{ t.company_admin }}
                     {% endif %}
                 </span>
-                <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary">{{ t.logout }}</a>
             </div>
         </div>
     </nav>
@@ -27,28 +43,42 @@
     <div class="crm-container">
         <div class="sidebar">
             <div class="sidebar-menu">
-                <button class="menu-btn active" onclick="showSection('dashboard')">Dashboard</button>
-                <button class="menu-btn" onclick="showSection('products')">My Products</button>
+                <button class="menu-btn {% if not show_marketplace %}active{% endif %}" onclick="showSection('dashboard')">{{ t.dashboard }}</button>
+                <button class="menu-btn" onclick="showSection('products')">{% if is_logistics %}{% if lang == 'ar' %}خدماتي{% else %}My Services{% endif %}{% else %}{{ t.my_products }}{% endif %}</button>
+
+                <button class="menu-btn" onclick="showSection('orders')">{{ t.purchase_orders }}</button>
+                <button class="menu-btn" onclick="showSection('contracts')">{{ t.contracts }}</button>
+                <button class="menu-btn" onclick="showSection('suppliers')">{{ t.supplier_performance }}</button>
+                <button class="menu-btn" onclick="showSection('analytics')">{{ t.analytics }}</button>
                 {% if user_role in ['manager', 'purchase'] or session.user_type == 'company' %}
-                <button class="menu-btn" onclick="showSection('marketplace')">Marketplace</button>
+                <button class="menu-btn" onclick="showSection('marketplace')">{{ t.marketplace }}</button>
                 {% endif %}
+                {% if user_role in ['manager', 'marketing'] or session.user_type == 'company' %}
+                <button class="menu-btn" onclick="showSection('market-analytics')">{{ t.market_analytics }}</button>
+                <button class="menu-btn" onclick="showSection('packages')">{{ t.packages }}</button>
+                {% endif %}
+                <button class="menu-btn" onclick="showSection('chat')">{{ t.chat }}</button>
                 {% if user_role == 'manager' or session.user_type == 'company' %}
-                <button class="menu-btn" onclick="showSection('employees')">Employees</button>
+                <button class="menu-btn" onclick="showSection('employees')">{{ t.employees }}</button>
+                <button class="menu-btn" onclick="showSection('tasks')">{% if lang == 'ar' %}المهام والأهداف{% else %}Tasks & Goals{% endif %}</button>
+                {% endif %}
+                {% if user_role in ['manager', 'marketing'] or session.user_type == 'company' %}
+                <button class="menu-btn" onclick="showSection('company-page')">{% if lang == 'ar' %}صفحة الشركة{% else %}Company Page{% endif %}</button>
                 {% endif %}
             </div>
         </div>
 
         <div class="main-content">
             <!-- Dashboard Section -->
-            <div id="dashboard" class="content-section active">
-                <h2>Dashboard Overview</h2>
+            <div id="dashboard" class="content-section {% if not show_marketplace %}active{% endif %}">
+                <h2>{{ t.dashboard_overview }}</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <h3>Total Products</h3>
+                        <h3>{{ t.total_products }}</h3>
                         <p class="stat-number">{{ products|length }}</p>
                     </div>
                     <div class="stat-card">
-                        <h3>Low Stock Items</h3>
+                        <h3>{{ t.low_stock_items }}</h3>
                         <p class="stat-number">
                             {% set low_stock_count = 0 %}
                             {% for product in products %}
@@ -60,41 +90,62 @@
                         </p>
                     </div>
                     <div class="stat-card">
-                        <h3>Total Employees</h3>
+                        <h3>{{ t.total_employees }}</h3>
                         <p class="stat-number">{{ company.employees|length }}</p>
                     </div>
                     <div class="stat-card">
-                        <h3>Your Role</h3>
+                        <h3>{{ t.your_role }}</h3>
                         <p class="stat-text">
                             {% if session.user_type == 'employee' %}
                                 {{ session.role|title }}
                             {% else %}
-                                Admin
+                                {{ t.admin }}
                             {% endif %}
                         </p>
                     </div>
                 </div>
 
                 <div class="recent-activity">
-                    <h3>Quick Actions</h3>
+                    <h3>{{ t.quick_actions }}</h3>
                     <div class="action-buttons">
                         {% if user_role in ['manager', 'sales'] or session.user_type == 'company' %}
-                        <button class="btn btn-primary" onclick="showAddProductModal()">Add New Product</button>
+                        <button class="btn btn-primary" onclick="showAddProductModal()">{{ t.add_new_product }}</button>
                         {% endif %}
                         {% if user_role == 'manager' or session.user_type == 'company' %}
-                        <button class="btn btn-secondary" onclick="showAddEmployeeModal()">Add Employee</button>
+                        <button class="btn btn-secondary" onclick="showAddEmployeeModal()">{{ t.add_employee }}</button>
                         {% endif %}
-                        <button class="btn btn-info" onclick="showSection('marketplace')">Browse Marketplace</button>
+                        <button class="btn btn-info" onclick="showSection('marketplace')">{{ t.browse_marketplace }}</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Products Section -->
+            <!-- Products/Services Section -->
             <div id="products" class="content-section">
+                {% if is_logistics %}
+                <!-- Logistics Services Section -->
                 <div class="section-header">
-                    <h2>My Products</h2>
+                    <h2>{% if lang == 'ar' %}خدمات التوصيل{% else %}Delivery Services{% endif %}</h2>
+                </div>
+                <div class="services-grid">
+                    {% for service in delivery_services.services %}
+                    <div class="service-card">
+                        <div class="service-info">
+                            <h3>{{ service.name }}</h3>
+                            <p>{{ service.description }}</p>
+                            <div class="service-details">
+                                <span class="service-price">{{ "%.2f"|format(service.base_price) }} SAR</span>
+                                <span class="service-time">{{ service.time }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <!-- Regular Products Section -->
+                <div class="section-header">
+                    <h2>{{ t.my_products }}</h2>
                     {% if user_role in ['manager', 'sales'] or session.user_type == 'company' %}
-                    <button class="btn btn-primary" onclick="showAddProductModal()">Add Product</button>
+                    <button class="btn btn-primary" onclick="showAddProductModal()">{{ t.add_product }}</button>
                     {% endif %}
                 </div>
                 <div class="products-grid" id="products-grid">
@@ -107,7 +158,7 @@
                             <div class="product-details">
                                 <span class="product-price">${{ "%.2f"|format(product.price) }}</span>
                                 <span class="product-stock {% if product.quantity <= product.min_quantity %}low-stock{% endif %}">
-                                    {{ product.quantity }} in stock
+                                    {{ product.quantity }} {{ t.in_stock }}
                                 </span>
                             </div>
                             <span class="product-category">{{ product.category }}</span>
@@ -115,65 +166,927 @@
                     </div>
                     {% endfor %}
                 </div>
+                {% endif %}
             </div>
 
             <!-- Marketplace Section -->
             {% if user_role in ['manager', 'purchase'] or session.user_type == 'company' %}
-            <div id="marketplace" class="content-section">
-                <h2>Marketplace - Other Companies' Products</h2>
-                <div class="products-grid">
-                    {% for product in other_products %}
-                    <div class="product-card marketplace-product">
-                        <img src="{{ product.image }}" alt="{{ product.title }}" class="product-image">
-                        <div class="product-info">
-                            <h3>{{ product.title }}</h3>
-                            <p>{{ product.description }}</p>
-                            <div class="product-details">
-                                <span class="product-price">${{ "%.2f"|format(product.price) }}</span>
-                                <span class="product-stock">{{ product.quantity }} available</span>
-                            </div>
-                            <p class="product-company">by {{ product.company }}</p>
-                            <div class="product-actions">
-                                {% if user_role == 'purchase' %}
-                                <div class="quantity-selector">
-                                    <label for="crm-qty-{{ product.id }}">Quantity:</label>
-                                    <input type="number" id="crm-qty-{{ product.id }}" min="1" max="{{ product.quantity }}" value="1" class="quantity-input">
+            <div id="marketplace" class="content-section {% if show_marketplace %}active{% endif %}">
+                <h2>{{ t.marketplace }}</h2>
+                
+                <!-- Companies Section -->
+                <section class="companies-section">
+                    <h3>{{ t.partners }}</h3>
+                    <div class="companies-grid">
+                        {% for company_id, company in companies.items() %}
+                        <div class="company-card" onclick="window.location.href='{{ url_for('company_page', company_id=company_id) }}'" style="cursor: pointer;">
+                            <h4>{{ company.name }}</h4>
+                            <p class="company-industry">{{ company.industry }}</p>
+                            <p class="product-count">{{ (all_products|selectattr('company_id', 'equalto', company_id)|list)|length }} Products Available</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                
+                <!-- Products Section -->
+                <section class="products-section">
+                    <h3>{{ t.featured }}</h3>
+                    <div class="products-grid">
+                        {% for product in all_products %}
+                        <div class="product-card">
+                            <img src="{{ product.image }}" alt="{{ product.title }}" class="product-image">
+                            <div class="product-info">
+                                <h4>{{ product.title }}</h4>
+                                <p class="product-description">{{ product.description }}</p>
+                                <div class="product-details">
+                                    <span class="product-price">${{ "%.2f"|format(product.price) }}</span>
+                                    <span class="product-stock">{{ product.quantity }} {{ t.in_stock }}</span>
                                 </div>
-                                {% endif %}
-                                <button class="btn btn-secondary" onclick="contactSeller('{{ product.company_id }}', '{{ product.title }}')">
-                                    Contact Seller
-                                </button>
-                                {% if user_role == 'purchase' %}
-                                <button class="btn btn-primary" onclick="buyProductCRM('{{ product.company_id }}', {{ product.id }}, '{{ product.title }}', {{ product.price }})">
-                                    Buy with Torbiona
-                                </button>
-                                {% endif %}
+                                <p class="product-company">{{ t.by }} {{ product.company }}</p>
+                                <div class="product-actions">
+                                    <div class="quantity-selector">
+                                        <label for="crm-qty-{{ product.id }}">{{ t.quantity }}:</label>
+                                        <input type="number" id="crm-qty-{{ product.id }}" min="1" max="{{ product.quantity }}" value="1" class="quantity-input">
+                                        <div class="delivery-date-selector">
+                                            <label for="crm-delivery-{{ product.id }}">{{ t.delivery_date }}:</label>
+                                            <input type="date" id="crm-delivery-{{ product.id }}" class="delivery-date-input">
+                                        </div>
+                                    </div>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-secondary" onclick="openChatWindow('{{ product.company_id }}', '{{ product.id }}', '{{ product.title }}', '{{ product.company }}')">
+                                            {{ t.contact_seller }}
+                                        </button>
+                                        {% if session.company_id == 'fastlogistics' %}
+                                        <button class="btn btn-info" onclick="openAssignServiceWindow('{{ product.company_id }}', '{{ product.id }}', '{{ product.title }}', {{ product.price }})">
+                                            {% if lang == 'ar' %}تعيين خدمة{% else %}Assign Service{% endif %}
+                                        </button>
+                                        {% else %}
+                                        {% if user_role in ['purchase', 'manager'] or session.user_type == 'company' %}
+                                        <button class="btn btn-primary" onclick="openPaymentWindow('{{ product.company_id }}', '{{ product.id }}', '{{ product.title }}', {{ product.price }})">
+                                            {{ t.buy_now }}
+                                        </button>
+                                        {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+            {% endif %}
+
+            <!-- Department Management Section -->
+            {% if user_role == 'manager' or session.user_type == 'company' %}
+            <div id="employees" class="content-section">
+                <div class="section-header">
+                    <h2>{% if lang == 'ar' %}إدارة الأقسام{% else %}Department Management{% endif %}</h2>
+                    <button class="btn btn-primary" onclick="showAddDepartmentModal()">{% if lang == 'ar' %}إضافة قسم{% else %}Add Department{% endif %}</button>
+                </div>
+                <div class="departments-container">
+                    <!-- C-Level Executives -->
+                    <div class="department-section">
+                        <div class="department-header">
+                            <h3>{% if lang == 'ar' %}الإدارة العليا{% else %}Executive Management{% endif %}</h3>
+                            <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('الإدارة العليا')">{% if lang == 'ar' %}إضافة موظف{% else %}Add Employee{% endif %}</button>
+                        </div>
+                        <div class="employees-grid" id="dept-executive">
+                            <div class="employee-card">
+                                <div class="employee-avatar">CEO</div>
+                                <h4>محمد العمري</h4>
+                                <p class="employee-role">{% if lang == 'ar' %}الرئيس التنفيذي{% else %}Chief Executive Officer{% endif %}</p>
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
+
+                    <!-- Departments Grid -->
+                    <div class="departments-grid">
+                        <!-- Finance Department -->
+                        <div class="department-card">
+                            <div class="department-header">
+                                <h4>{% if lang == 'ar' %}المالية والمحاسبة{% else %}Finance & Accounting{% endif %}</h4>
+                                <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('المالية والمحاسبة')">+</button>
+                            </div>
+                            <div class="department-employees">
+                                <div class="employee-mini-card">
+                                    <div class="employee-avatar">CFO</div>
+                                    <span>عبدالله السعد</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- HR Department -->
+                        <div class="department-card">
+                            <div class="department-header">
+                                <h4>{% if lang == 'ar' %}الموارد البشرية{% else %}Human Resources{% endif %}</h4>
+                                <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('الموارد البشرية')">+</button>
+                            </div>
+                            <div class="department-employees">
+                                <div class="employee-mini-card">
+                                    <div class="employee-avatar">HR</div>
+                                    <span>فاطمة الأحمد</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Marketing Department -->
+                        <div class="department-card">
+                            <div class="department-header">
+                                <h4>{% if lang == 'ar' %}التسويق{% else %}Marketing{% endif %}</h4>
+                                <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('التسويق')">+</button>
+                            </div>
+                            <div class="department-employees">
+                                <div class="employee-mini-card">
+                                    <div class="employee-avatar">MKT</div>
+                                    <span>ليلى الشمري</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sales Department -->
+                        <div class="department-card">
+                            <div class="department-header">
+                                <h4>{% if lang == 'ar' %}المبيعات{% else %}Sales{% endif %}</h4>
+                                <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('المبيعات')">+</button>
+                            </div>
+                            <div class="department-employees">
+                                <div class="employee-mini-card">
+                                    <div class="employee-avatar">SLS</div>
+                                    <span>سارة المحمد</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Operations Department -->
+                        <div class="department-card">
+                            <div class="department-header">
+                                <h4>{% if lang == 'ar' %}العمليات / الإنتاج{% else %}Operations / Production{% endif %}</h4>
+                                <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('العمليات')">+</button>
+                            </div>
+                            <div class="department-employees">
+                                <div class="employee-mini-card">
+                                    <div class="employee-avatar">OPS</div>
+                                    <span>عمر الزهراني</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Procurement Department -->
+                        <div class="department-card">
+                            <div class="department-header">
+                                <h4>{% if lang == 'ar' %}المشتريات والمخزون{% else %}Procurement & Inventory{% endif %}</h4>
+                                <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('المشتريات')">+</button>
+                            </div>
+                            <div class="department-employees">
+                                <div class="employee-mini-card">
+                                    <div class="employee-avatar">PRC</div>
+                                    <span>حسن القحطاني</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- IT Department -->
+                        <div class="department-card">
+                            <div class="department-header">
+                                <h4>{% if lang == 'ar' %}تكنولوجيا المعلومات{% else %}Information Technology{% endif %}</h4>
+                                <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('تكنولوجيا المعلومات')">+</button>
+                            </div>
+                            <div class="department-employees">
+                                <div class="employee-mini-card">
+                                    <div class="employee-avatar">IT</div>
+                                    <span>ريم الفيصل</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Customer Service Department -->
+                        <div class="department-card">
+                            <div class="department-header">
+                                <h4>{% if lang == 'ar' %}خدمة العملاء{% else %}Customer Service{% endif %}</h4>
+                                <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('خدمة العملاء')">+</button>
+                            </div>
+                            <div class="department-employees">
+                                <div class="employee-mini-card">
+                                    <div class="employee-avatar">CS</div>
+                                    <span>هدى القرني</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Planning & Development Department -->
+                        <div class="department-card">
+                            <div class="department-header">
+                                <h4>{% if lang == 'ar' %}التخطيط والتطوير{% else %}Planning & Development{% endif %}</h4>
+                                <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('التخطيط')">+</button>
+                            </div>
+                            <div class="department-employees">
+                                <div class="employee-mini-card">
+                                    <div class="employee-avatar">PD</div>
+                                    <span>أميرة الجهني</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endif %}
 
-            <!-- Employees Section -->
+            <!-- Tasks & Goals Section -->
             {% if user_role == 'manager' or session.user_type == 'company' %}
-            <div id="employees" class="content-section">
+            <div id="tasks" class="content-section">
                 <div class="section-header">
-                    <h2>Employee Management</h2>
-                    <button class="btn btn-primary" onclick="showAddEmployeeModal()">Add Employee</button>
+                    <h2>{% if lang == 'ar' %}المهام والأهداف{% else %}Tasks & Goals{% endif %}</h2>
+                    <button class="btn btn-primary" onclick="showAddTaskModal()">{% if lang == 'ar' %}إضافة مهمة{% else %}Add Task{% endif %}</button>
                 </div>
-                <div class="employees-grid">
-                    {% for emp_id, employee in company.employees.items() %}
-                    <div class="employee-card">
-                        <h3>{{ employee.name }}</h3>
-                        <p class="employee-role">{{ employee.role|title }}</p>
-                        <p class="employee-id">ID: {{ emp_id }}</p>
+                <div class="tasks-grid">
+                    <div class="task-card">
+                        <div class="task-header">
+                            <h3>{% if lang == 'ar' %}زيادة المبيعات الشهرية{% else %}Increase Monthly Sales{% endif %}</h3>
+                            <span class="task-status pending">{% if lang == 'ar' %}قيد التنفيذ{% else %}Pending{% endif %}</span>
+                        </div>
+                        <p class="task-description">{% if lang == 'ar' %}تحقيق هدف مبيعات 50,000 ريال هذا الشهر{% else %}Achieve sales target of 50,000 SAR this month{% endif %}</p>
+                        <div class="task-details">
+                            <p><strong>{% if lang == 'ar' %}معين إلى:{% else %}Assigned to:{% endif %}</strong> فاطمة الأحمد</p>
+                            <p><strong>{% if lang == 'ar' %}المكافأة:{% else %}Reward:{% endif %}</strong> 2,000 {% if lang == 'ar' %}ريال{% else %}SAR{% endif %}</p>
+                            <p><strong>{% if lang == 'ar' %}تاريخ الانتهاء:{% else %}Due Date:{% endif %}</strong> 2024-12-31</p>
+                        </div>
+                        <button class="btn btn-success" onclick="completeTask(1)">{% if lang == 'ar' %}إنجاز المهمة{% else %}Mark Complete{% endif %}</button>
                     </div>
-                    {% endfor %}
+                    <div class="task-card">
+                        <div class="task-header">
+                            <h3>{% if lang == 'ar' %}تحسين خدمة العملاء{% else %}Improve Customer Service{% endif %}</h3>
+                            <span class="task-status completed">{% if lang == 'ar' %}منجز{% else %}Completed{% endif %}</span>
+                        </div>
+                        <p class="task-description">{% if lang == 'ar' %}الرد على جميع استفسارات العملاء خلال 24 ساعة{% else %}Respond to all customer inquiries within 24 hours{% endif %}</p>
+                        <div class="task-details">
+                            <p><strong>{% if lang == 'ar' %}معين إلى:{% else %}Assigned to:{% endif %}</strong> عمر الزهراني</p>
+                            <p><strong>{% if lang == 'ar' %}المكافأة:{% else %}Reward:{% endif %}</strong> 1,500 {% if lang == 'ar' %}ريال{% else %}SAR{% endif %}</p>
+                            <p><strong>{% if lang == 'ar' %}تم الإنجاز:{% else %}Completed:{% endif %}</strong> 2024-12-15</p>
+                        </div>
+                        <span class="reward-badge">{% if lang == 'ar' %}تم صرف المكافأة{% else %}Reward Paid{% endif %}</span>
+                    </div>
                 </div>
             </div>
             {% endif %}
+
+            <!-- Purchase Orders Section -->
+            <div id="orders" class="content-section">
+                <div class="section-header">
+                    <h2>{% if lang == 'ar' %}طلبات الشراء{% else %}Purchase Orders{% endif %}</h2>
+                    <button class="btn btn-primary" onclick="generatePO()">{% if lang == 'ar' %}إنشاء طلب شراء{% else %}Generate PO{% endif %}</button>
+                </div>
+                <div class="orders-list">
+                    <div class="order-item">
+                        <div class="order-header">
+                            <span class="order-id">PO-2024-001</span>
+                            <span class="order-status status-completed">{% if lang == 'ar' %}مكتمل{% else %}Completed{% endif %}</span>
+                        </div>
+                        <div class="order-details">
+                            <p><strong>{% if lang == 'ar' %}المورد:{% else %}Supplier:{% endif %}</strong> Global Materials Supply</p>
+                            <p><strong>{% if lang == 'ar' %}المنتج:{% else %}Product:{% endif %}</strong> Steel Reinforcement Bars</p>
+                            <p><strong>{% if lang == 'ar' %}المبلغ:{% else %}Amount:{% endif %}</strong> $22,500.00</p>
+                            <p><strong>{% if lang == 'ar' %}تاريخ الاستحقاق:{% else %}Due Date:{% endif %}</strong> Dec 15, 2024</p>
+                            <div class="order-rating">
+                                <span class="rating-stars">★★★★★</span>
+                                <span class="rating-text">4.5/5 - Excellent quality materials</span>
+                            </div>
+                        </div>
+                        <div class="order-actions">
+                            <button class="btn btn-secondary" onclick="downloadPDF('PO-2024-001')">{% if lang == 'ar' %}تحميل PDF{% else %}Download PDF{% endif %}</button>
+                        </div>
+                    </div>
+                    
+                    <div class="order-item">
+                        <div class="order-header">
+                            <span class="order-id">PO-2024-002</span>
+                            <span class="order-status status-completed">{% if lang == 'ar' %}مكتمل{% else %}Completed{% endif %}</span>
+                        </div>
+                        <div class="order-details">
+                            <p><strong>{% if lang == 'ar' %}المورد:{% else %}Supplier:{% endif %}</strong> BuildTech Construction</p>
+                            <p><strong>{% if lang == 'ar' %}المنتج:{% else %}Product:{% endif %}</strong> Concrete Mixers</p>
+                            <p><strong>{% if lang == 'ar' %}المبلغ:{% else %}Amount:{% endif %}</strong> $45,000.00</p>
+                            <p><strong>{% if lang == 'ar' %}تاريخ الاستحقاق:{% else %}Due Date:{% endif %}</strong> Dec 20, 2024</p>
+                            <div class="order-rating">
+                                <span class="rating-stars">★★★★☆</span>
+                                <span class="rating-text">4.2/5 - Good equipment, minor delay</span>
+                            </div>
+                        </div>
+                        <div class="order-actions">
+                            <button class="btn btn-secondary" onclick="downloadPDF('PO-2024-002')">{% if lang == 'ar' %}تحميل PDF{% else %}Download PDF{% endif %}</button>
+                        </div>
+                    </div>
+                    
+                    <div class="order-item">
+                        <div class="order-header">
+                            <span class="order-id">PO-2024-003</span>
+                            <span class="order-status status-pending">{% if lang == 'ar' %}قيد الانتظار{% else %}Pending{% endif %}</span>
+                        </div>
+                        <div class="order-details">
+                            <p><strong>{% if lang == 'ar' %}المورد:{% else %}Supplier:{% endif %}</strong> ProBuild Materials</p>
+                            <p><strong>{% if lang == 'ar' %}المنتج:{% else %}Product:{% endif %}</strong> Safety Equipment</p>
+                            <p><strong>{% if lang == 'ar' %}المبلغ:{% else %}Amount:{% endif %}</strong> $18,750.00</p>
+                            <p><strong>{% if lang == 'ar' %}تاريخ الاستحقاق:{% else %}Due Date:{% endif %}</strong> Dec 30, 2024</p>
+                        </div>
+                        <div class="order-actions">
+                            <button class="btn btn-secondary" onclick="downloadPDF('PO-2024-003')">{% if lang == 'ar' %}تحميل PDF{% else %}Download PDF{% endif %}</button>
+                        </div>
+                    </div>
+                    
+                    <div class="order-item">
+                        <div class="order-header">
+                            <span class="order-id">PO-2024-004</span>
+                            <span class="order-status status-completed">{% if lang == 'ar' %}مكتمل{% else %}Completed{% endif %}</span>
+                        </div>
+                        <div class="order-details">
+                            <p><strong>{% if lang == 'ar' %}المورد:{% else %}Supplier:{% endif %}</strong> SteelWorks Industries</p>
+                            <p><strong>{% if lang == 'ar' %}المنتج:{% else %}Product:{% endif %}</strong> Structural Steel Beams</p>
+                            <p><strong>{% if lang == 'ar' %}المبلغ:{% else %}Amount:{% endif %}</strong> $67,500.00</p>
+                            <p><strong>{% if lang == 'ar' %}تاريخ الاستحقاق:{% else %}Due Date:{% endif %}</strong> Nov 15, 2024</p>
+                            <div class="order-rating">
+                                <span class="rating-stars">★★★★★</span>
+                                <span class="rating-text">4.8/5 - Outstanding quality and service</span>
+                            </div>
+                        </div>
+                        <div class="order-actions">
+                            <button class="btn btn-secondary" onclick="downloadPDF('PO-2024-004')">{% if lang == 'ar' %}تحميل PDF{% else %}Download PDF{% endif %}</button>
+                            {% if user_role in ['manager', 'purchase'] or session.user_type == 'company' %}
+                            <button class="btn btn-primary" onclick="showRatingModal('PO-2024-004', 'SteelWorks Industries', 'Structural Steel Beams')">{% if lang == 'ar' %}تقييم{% else %}Rate{% endif %}</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="order-item">
+                        <div class="order-header">
+                            <span class="order-id">PO-2024-005</span>
+                            <span class="order-status status-progress">{% if lang == 'ar' %}قيد التنفيذ{% else %}In Progress{% endif %}</span>
+                        </div>
+                        <div class="order-details">
+                            <p><strong>{% if lang == 'ar' %}المورد:{% else %}Supplier:{% endif %}</strong> ConcretePro Solutions</p>
+                            <p><strong>{% if lang == 'ar' %}المنتج:{% else %}Product:{% endif %}</strong> Ready-Mix Concrete</p>
+                            <p><strong>{% if lang == 'ar' %}المبلغ:{% else %}Amount:{% endif %}</strong> $32,000.00</p>
+                            <p><strong>{% if lang == 'ar' %}تاريخ الاستحقاق:{% else %}Due Date:{% endif %}</strong> Dec 25, 2024</p>
+                        </div>
+                        <div class="order-actions">
+                            <button class="btn btn-secondary" onclick="downloadPDF('PO-2024-005')">{% if lang == 'ar' %}تحميل PDF{% else %}Download PDF{% endif %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contracts Section -->
+            <div id="contracts" class="content-section">
+                <div class="section-header">
+                    <h2>{% if lang == 'ar' %}العقود الرقمية{% else %}Digital Contracts{% endif %}</h2>
+                    <div class="contract-actions">
+                        <button class="btn btn-primary" onclick="generateSampleContract()">{% if lang == 'ar' %}إنشاء عقد تجريبي{% else %}Generate Sample Contract{% endif %}</button>
+                        <button class="btn btn-secondary" onclick="loadContracts()">{% if lang == 'ar' %}تحديث{% else %}Refresh{% endif %}</button>
+                        <button class="btn btn-info" onclick="hideContractView()" id="backToListBtn" style="display: none;">{% if lang == 'ar' %}العودة للقائمة{% else %}Back to List{% endif %}</button>
+                    </div>
+                </div>
+                
+                <!-- Contract List View -->
+                <div class="contracts-list" id="contractsList">
+                    <!-- Sample contracts -->
+                    <div class="contract-card">
+                        <h3>Purchase Agreement - Heavy Excavators</h3>
+                        <div class="contract-info">
+                            <p><strong>Buyer:</strong> {{ company.name }}</p>
+                            <p><strong>Seller:</strong> Construction Equipment Co.</p>
+                            <p><strong>Amount:</strong> $450,000.00</p>
+                            <p><strong>Date:</strong> 2024-12-01</p>
+                            <p><strong>Status:</strong> <span class="status-active">Active</span></p>
+                        </div>
+                        <div class="contract-actions">
+                            <button class="btn btn-primary" onclick="showContractInline('CONTRACT-001')">View Contract</button>
+                            <button class="btn btn-secondary" onclick="printContractInline()">Print</button>
+                        </div>
+                    </div>
+                    
+                    <div class="contract-card">
+                        <h3>Supply Agreement - Steel Reinforcement</h3>
+                        <div class="contract-info">
+                            <p><strong>Buyer:</strong> Al-Saif Construction</p>
+                            <p><strong>Seller:</strong> {{ company.name }}</p>
+                            <p><strong>Amount:</strong> $280,000.00</p>
+                            <p><strong>Date:</strong> 2024-11-28</p>
+                            <p><strong>Status:</strong> <span class="status-active">Active</span></p>
+                        </div>
+                        <div class="contract-actions">
+                            <button class="btn btn-primary" onclick="showContractInline('CONTRACT-002')">View Contract</button>
+                            <button class="btn btn-secondary" onclick="printContractInline()">Print</button>
+                        </div>
+                    </div>
+                    
+                    <div class="contract-card">
+                        <h3>Torbiona Financing Agreement</h3>
+                        <div class="contract-info">
+                            <p><strong>Buyer:</strong> {{ company.name }}</p>
+                            <p><strong>Seller:</strong> Torbiona Financial Services</p>
+                            <p><strong>Amount:</strong> $125,000.00</p>
+                            <p><strong>Date:</strong> 2024-11-25</p>
+                            <p><strong>Status:</strong> <span class="status-active">Active</span></p>
+                        </div>
+                        <div class="contract-actions">
+                            <button class="btn btn-primary" onclick="showContractInline('CONTRACT-003')">View Contract</button>
+                            <button class="btn btn-secondary" onclick="printContractInline()">Print</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contract Detail View -->
+                <div class="contract-detail" id="contractDetail" style="display: none;">
+                    <div class="contract-document">
+                        <div class="contract-header">
+                            <div class="company-logo">
+                                <h1>{{ t.site_name }}</h1>
+                                <p>{% if lang == 'ar' %}منصة البناء والمقاولات الرائدة{% else %}Premier Construction & Contracting Platform{% endif %}</p>
+                            </div>
+                            <div class="contract-title">
+                                <h2>{% if lang == 'ar' %}عقد أمر شراء تجاري{% else %}B2B PURCHASE ORDER CONTRACT{% endif %}</h2>
+                                <p class="contract-number">Contract No: <span id="contractNumber">CONTRACT-001</span></p>
+                                <p class="contract-date">Date: <span id="contractDate">December 1, 2024</span></p>
+                            </div>
+                        </div>
+
+                        <div class="contract-body">
+                            <div class="contract-intro">
+                                <p>This Purchase Order Contract ("Contract") is made and entered into as of <span id="contractDate">December 1, 2024</span>, by and between:</p>
+                                <br>
+                                <p><strong>Buyer:</strong> <span id="buyerName">{{ company.name }}</span>, having its principal place of business at Riyadh, Saudi Arabia</p>
+                                <p><strong>Seller:</strong> <span id="sellerName">Construction Equipment Co.</span>, having its principal place of business at Jeddah, Saudi Arabia</p>
+                            </div>
+
+                            <section class="contract-section">
+                                <h3>1. Purpose</h3>
+                                <p>The Buyer agrees to purchase from the Seller, and the Seller agrees to sell to the Buyer, the goods or services described in the purchase order(s) attached hereto or referenced herein ("Products").</p>
+                            </section>
+
+                            <section class="contract-section">
+                                <h3>2. Description of Goods/Services</h3>
+                                <table class="goods-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item No.</th>
+                                            <th>Description</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>1</td>
+                                            <td id="productDescription">Heavy Construction Equipment</td>
+                                            <td id="productQuantity">2</td>
+                                            <td id="unitPrice">$225,000.00</td>
+                                            <td id="totalAmount">$450,000.00</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p><strong>Total Contract Value:</strong> <span id="grandTotal">Four Hundred Fifty Thousand US Dollars ($450,000.00)</span></p>
+                            </section>
+
+                            <section class="contract-section">
+                                <h3>3. Payment Terms</h3>
+                                <ul>
+                                    <li>Payment shall be made 50% advance payment upon signing and 50% upon delivery.</li>
+                                    <li>Late payments may incur interest at 1.5% per month.</li>
+                                </ul>
+                            </section>
+
+                            <section class="contract-section">
+                                <h3>4. Delivery and Acceptance</h3>
+                                <ul>
+                                    <li>The Seller shall deliver the Products to the project site specified by buyer by the agreed delivery date.</li>
+                                    <li>Ownership and risk of loss transfer upon delivery and acceptance as per agreed conditions.</li>
+                                    <li>The Buyer shall inspect the Products within 7 days of delivery and notify the Seller of any defects.</li>
+                                </ul>
+                            </section>
+
+                            <section class="contract-section">
+                                <h3>5. Warranties</h3>
+                                <ul>
+                                    <li>The Seller warrants that all Products are new, free from defects, and conform to the specifications stated in this Contract.</li>
+                                    <li>This warranty shall remain valid for 12 months from the date of delivery.</li>
+                                </ul>
+                            </section>
+
+                            <section class="contract-section">
+                                <h3>6. Confidentiality</h3>
+                                <p>Both parties agree to maintain confidentiality of all non-public information shared in connection with this Contract.</p>
+                            </section>
+
+                            <section class="contract-section">
+                                <h3>7. Termination</h3>
+                                <p>Either party may terminate this Contract upon 30 days' written notice in the event of a material breach not cured within 15 days.</p>
+                            </section>
+
+                            <section class="contract-section">
+                                <h3>8. Force Majeure</h3>
+                                <p>Neither party shall be liable for failure to perform due to causes beyond reasonable control, including but not limited to acts of God, war, or government restrictions.</p>
+                            </section>
+
+                            <section class="contract-section">
+                                <h3>9. Governing Law and Jurisdiction</h3>
+                                <p>This Contract shall be governed by and construed in accordance with the laws of Saudi Arabia. Any dispute shall be resolved in the courts of Riyadh, Saudi Arabia.</p>
+                            </section>
+
+                            <section class="contract-section">
+                                <h3>10. Entire Agreement</h3>
+                                <p>This Contract constitutes the entire agreement between the parties and supersedes all prior discussions or understandings.</p>
+                            </section>
+                        </div>
+
+                        <div class="contract-signatures">
+                            <p><strong>IN WITNESS WHEREOF, the parties have executed this Contract as of the date first written above.</strong></p>
+                            <br>
+                            <div class="signature-section">
+                                <div class="signature-block">
+                                    <h4>Buyer</h4>
+                                    <div class="signature-line"></div>
+                                    <p>Name: ___________________________</p>
+                                    <p>Title: ___________________________</p>
+                                    <p>Date: ___________________________</p>
+                                </div>
+                                <div class="signature-block">
+                                    <h4>Seller</h4>
+                                    <div class="signature-line"></div>
+                                    <p>Name: ___________________________</p>
+                                    <p>Title: ___________________________</p>
+                                    <p>Date: ___________________________</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supplier Performance Section -->
+            <div id="suppliers" class="content-section">
+                <h2>Supplier Performance Dashboard</h2>
+                <div class="suppliers-grid">
+                    <div class="supplier-card">
+                        <h3>Global Materials Supply</h3>
+                        <div class="performance-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Avg Delivery Time</span>
+                                <span class="metric-value">2.8 days</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Quality Rating</span>
+                                <span class="metric-value">4.7/5.0</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Orders Completed</span>
+                                <span class="metric-value">67</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="supplier-card">
+                        <h3>BuildTech Construction</h3>
+                        <div class="performance-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Avg Delivery Time</span>
+                                <span class="metric-value">3.2 days</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Quality Rating</span>
+                                <span class="metric-value">4.5/5.0</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Orders Completed</span>
+                                <span class="metric-value">45</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div id="analytics" class="content-section">
+                <h2>Analytics & Reporting</h2>
+                
+                <!-- Sales Analytics -->
+                <div class="analytics-section">
+                    <h3>Sales Dashboard</h3>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h4>Monthly Revenue</h4>
+                            <div class="chart-placeholder">
+                                <div class="revenue-chart">
+                                    <div class="bar" style="height: 45%;">45K</div>
+                                    <div class="bar" style="height: 52%;">52K</div>
+                                    <div class="bar" style="height: 48%;">48K</div>
+                                    <div class="bar" style="height: 61%;">61K</div>
+                                    <div class="bar" style="height: 58%;">58K</div>
+                                    <div class="bar" style="height: 67%;">67K</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>Top Products</h4>
+                            <div class="top-products">
+                                <div class="product-stat">
+                                    <span>Heavy Duty Excavator</span>
+                                    <span class="stat-value">$375K</span>
+                                </div>
+                                <div class="product-stat">
+                                    <span>Steel Reinforcement Bars</span>
+                                    <span class="stat-value">$22.5K</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Management -->
+                <div class="analytics-section">
+                    <h3>Inventory Management</h3>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h4>Stock Levels</h4>
+                            <div class="inventory-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Low Stock Items</span>
+                                    <span class="stat-number alert">2</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Total Inventory Value</span>
+                                    <span class="stat-number">$892K</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>Reorder Alerts</h4>
+                            <div class="reorder-list">
+                                <div class="alert-item">⚠️ Safety Helmets - Below minimum</div>
+                                <div class="alert-item">⚠️ Steel Bars - Reorder needed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Insights -->
+                <div class="analytics-section">
+                    <h3>Customer Insights</h3>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h4>Top Customers</h4>
+                            <div class="customer-list">
+                                <div class="customer-stat">
+                                    <span>BuildTech Construction</span>
+                                    <span class="stat-value">$156K (12 orders)</span>
+                                </div>
+                                <div class="customer-stat">
+                                    <span>Global Materials Supply</span>
+                                    <span class="stat-value">$89K (8 orders)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>Popular Categories</h4>
+                            <div class="category-chart">
+                                <div class="category-bar">
+                                    <span>Heavy Machinery</span>
+                                    <div class="bar-fill" style="width: 85%;">85%</div>
+                                </div>
+                                <div class="category-bar">
+                                    <span>Safety Equipment</span>
+                                    <div class="bar-fill" style="width: 65%;">65%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Reports -->
+                <div class="analytics-section">
+                    <h3>Financial Reports</h3>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h4>Profit & Loss</h4>
+                            <div class="financial-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Profit Margin</span>
+                                    <span class="stat-number positive">23.5%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Total Revenue</span>
+                                    <span class="stat-number">$331K</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>Payment Status</h4>
+                            <div class="payment-chart">
+                                <div class="payment-stat">
+                                    <span>Outstanding Invoices</span>
+                                    <span class="stat-value alert">$45K</span>
+                                </div>
+                                <div class="payment-breakdown">
+                                    <div class="payment-bar">
+                                        <div class="paid" style="width: 85%;">Paid 85%</div>
+                                        <div class="pending" style="width: 15%;">Pending 15%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Analytics Section -->
+            {% if user_role in ['manager', 'marketing'] or session.user_type == 'company' %}
+            <div id="market-analytics" class="content-section">
+                <div class="section-header">
+                    <h2>{{ t.market_analytics }}</h2>
+                </div>
+                <div class="analytics-grid">
+                    <div class="analytics-section">
+                        <h2>{{ t.supply_demand }}</h2>
+                        <div class="dashboard-grid">
+                            <div class="dashboard-card">
+                                <h3>{% if lang == 'ar' %}العرض الحالي{% else %}Current Supply{% endif %}</h3>
+                                <div class="market-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">{% if lang == 'ar' %}المنتجات المتاحة{% else %}Available Products{% endif %}</span>
+                                        <span class="stat-value">1,247</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">{% if lang == 'ar' %}الموردين النشطين{% else %}Active Suppliers{% endif %}</span>
+                                        <span class="stat-value">89</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dashboard-card">
+                                <h3>{% if lang == 'ar' %}الطلب الحالي{% else %}Current Demand{% endif %}</h3>
+                                <div class="market-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">{% if lang == 'ar' %}طلبات الشراء{% else %}Purchase Orders{% endif %}</span>
+                                        <span class="stat-value">342</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">{% if lang == 'ar' %}المشترين النشطين{% else %}Active Buyers{% endif %}</span>
+                                        <span class="stat-value">156</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="analytics-section">
+                    <h3>{% if lang == 'ar' %}تحميل التقارير والإعلانات{% else %}Reports & Ads Download{% endif %}</h3>
+                    <div class="reports-grid">
+                        <div class="report-card">
+                            <div class="report-icon">📊</div>
+                            <h3>{% if lang == 'ar' %}تقرير السوق الشهري{% else %}Monthly Market Report{% endif %}</h3>
+                            <p>{% if lang == 'ar' %}تحليل شامل لاتجاهات السوق{% else %}Comprehensive market trends analysis{% endif %}</p>
+                            <button class="btn btn-primary download-btn">{% if lang == 'ar' %}تحميل{% else %}Download{% endif %}</button>
+                        </div>
+                        <div class="report-card">
+                            <div class="report-icon">📈</div>
+                            <h3>{% if lang == 'ar' %}إعلان ترويجي{% else %}Promotional Ad{% endif %}</h3>
+                            <p>{% if lang == 'ar' %}مواد إعلانية للحملات التسويقية{% else %}Marketing campaign materials{% endif %}</p>
+                            <button class="btn btn-primary download-btn">{% if lang == 'ar' %}تحميل{% else %}Download{% endif %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Packages Section -->
+            {% if user_role in ['manager', 'marketing'] or session.user_type == 'company' %}
+            <div id="packages" class="content-section">
+                <div class="section-header">
+                    <h2>{{ t.packages }}</h2>
+                </div>
+                <div class="packages-grid">
+                    <div class="package-card">
+                        <div class="package-header">
+                            <h2>{{ t.package_1 }}</h2>
+                            <div class="package-price">
+                                <span class="price">100</span>
+                                <span class="currency">{{ t.sar }}</span>
+                            </div>
+                        </div>
+                        <div class="package-features">
+                            <p class="package-description">{{ t.package_1_desc }}</p>
+                            <ul class="features-list">
+                                <li>{% if lang == 'ar' %}الظهور الأول لمدة يوم واحد{% else %}First appearance for 1 day{% endif %}</li>
+                                <li>{% if lang == 'ar' %}صورة إعلانية في الواجهة{% else %}Advertising image in interface{% endif %}</li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-primary package-btn" onclick="purchasePackage(1, 100)">{{ t.purchase_package }}</button>
+                    </div>
+                    <div class="package-card featured">
+                        <div class="package-header">
+                            <h2>{{ t.package_2 }}</h2>
+                            <div class="package-price">
+                                <span class="price">1,000</span>
+                                <span class="currency">{{ t.sar }}</span>
+                            </div>
+                            <div class="popular-badge">{% if lang == 'ar' %}الأكثر شعبية{% else %}Most Popular{% endif %}</div>
+                        </div>
+                        <div class="package-features">
+                            <p class="package-description">{{ t.package_2_desc }}</p>
+                            <ul class="features-list">
+                                <li>{% if lang == 'ar' %}الظهور الأول لمدة أسبوع{% else %}First appearance for 1 week{% endif %}</li>
+                                <li>{% if lang == 'ar' %}منتجين مميزين{% else %}2 featured products{% endif %}</li>
+                                <li>{% if lang == 'ar' %}صورة إعلانية في الواجهة{% else %}Advertising image in interface{% endif %}</li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-primary package-btn" onclick="purchasePackage(2, 1000)">{{ t.purchase_package }}</button>
+                    </div>
+                    <div class="package-card premium">
+                        <div class="package-header">
+                            <h2>{{ t.package_3 }}</h2>
+                            <div class="package-price">
+                                <span class="price">10,000</span>
+                                <span class="currency">{{ t.sar }}</span>
+                            </div>
+                            <div class="premium-badge">{% if lang == 'ar' %}بريميوم{% else %}Premium{% endif %}</div>
+                        </div>
+                        <div class="package-features">
+                            <p class="package-description">{{ t.package_3_desc }}</p>
+                            <ul class="features-list">
+                                <li>{% if lang == 'ar' %}الظهور الأول لمدة شهر كامل{% else %}First appearance for 1 full month{% endif %}</li>
+                                <li>{% if lang == 'ar' %}منتجين مميزين{% else %}2 featured products{% endif %}</li>
+                                <li>{% if lang == 'ar' %}صورة إعلانية كبيرة{% else %}Large advertising image{% endif %}</li>
+                                <li>{% if lang == 'ar' %}تقارير تحليلية مفصلة{% else %}Detailed analytics reports{% endif %}</li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-primary package-btn" onclick="purchasePackage(3, 10000)">{{ t.purchase_package }}</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Company Page Management Section -->
+            {% if user_role in ['manager', 'marketing'] or session.user_type == 'company' %}
+            <div id="company-page" class="content-section">
+                <div class="section-header">
+                    <h2>{% if lang == 'ar' %}إدارة صفحة الشركة{% else %}Company Page Management{% endif %}</h2>
+                    <a href="/company/{{ session.company_id }}" target="_blank" class="btn btn-info">{% if lang == 'ar' %}عرض الصفحة{% else %}View Page{% endif %}</a>
+                </div>
+                <div class="company-page-editor">
+                    <div class="editor-section">
+                        <h3>{% if lang == 'ar' %}من نحن{% else %}About Us{% endif %}</h3>
+                        <textarea id="aboutUs" rows="4" placeholder="{% if lang == 'ar' %}اكتب عن شركتك...{% else %}Write about your company...{% endif %}">{{ company.name }} is a leading company in the {{ company.industry }} sector, committed to delivering excellence and innovation in every project we undertake.</textarea>
+                    </div>
+                    <div class="editor-section">
+                        <h3>{% if lang == 'ar' %}معلومات الاتصال{% else %}Contact Information{% endif %}</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>{% if lang == 'ar' %}الهاتف{% else %}Phone{% endif %}</label>
+                                <input type="text" id="phone" value="+966 11 123 4567">
+                            </div>
+                            <div class="form-group">
+                                <label>{% if lang == 'ar' %}البريد الإلكتروني{% else %}Email{% endif %}</label>
+                                <input type="email" id="email" value="info@{{ session.company_id }}.com">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>{% if lang == 'ar' %}العنوان{% else %}Address{% endif %}</label>
+                            <input type="text" id="address" value="{% if lang == 'ar' %}الرياض، المملكة العربية السعودية{% else %}Riyadh, Saudi Arabia{% endif %}">
+                        </div>
+                    </div>
+                    <div class="editor-actions">
+                        <button class="btn btn-primary" onclick="saveCompanyPage()">{% if lang == 'ar' %}حفظ التغييرات{% else %}Save Changes{% endif %}</button>
+                        <button class="btn btn-secondary" onclick="previewCompanyPage()">{% if lang == 'ar' %}معاينة{% else %}Preview{% endif %}</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Chat Section -->
+            <div id="chat" class="content-section">
+                <div class="section-header">
+                    <h2>{{ t.chat }}</h2>
+                    <button class="btn btn-secondary" onclick="loadChats()">Refresh Chats</button>
+                </div>
+                <div class="chat-container">
+                    <div class="chat-list">
+                        <h3>{{ t.messages }}</h3>
+                        <div id="chat-conversations">
+                            <p>Loading chats...</p>
+                        </div>
+                    </div>
+                    <div class="chat-window" id="chat-window" style="display: none;">
+                        <div class="chat-header">
+                            <h4 id="chat-title">Chat</h4>
+                            <button onclick="closeChatWindow()" class="close-chat">&times;</button>
+                        </div>
+                        <div class="chat-messages" id="chat-messages">
+                            <!-- Messages will appear here -->
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="message-input" placeholder="{{ t.type_message }}" onkeypress="handleEnter(event)">
+                            <button onclick="sendMessage()" class="btn btn-primary">{{ t.send_message }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -220,38 +1133,1267 @@
         </div>
     </div>
 
-    <!-- Add Employee Modal -->
-    <div id="addEmployeeModal" class="modal">
+    <!-- Rating Modal -->
+    <div id="ratingModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('addEmployeeModal')">&times;</span>
-            <h2>Add New Employee</h2>
-            <form id="addEmployeeForm">
+            <span class="close" onclick="closeModal('ratingModal')">&times;</span>
+            <h2 id="ratingTitle">{% if lang == 'ar' %}تقييم الطلب{% else %}Rate Order{% endif %}</h2>
+            <form id="ratingForm">
                 <div class="form-group">
-                    <label for="employeeName">Employee Name</label>
-                    <input type="text" id="employeeName" required>
+                    <label>{% if lang == 'ar' %}رقم الطلب:{% else %}Order ID:{% endif %}</label>
+                    <input type="text" id="ratingOrderId" readonly>
                 </div>
                 <div class="form-group">
-                    <label for="employeeId">Employee ID</label>
-                    <input type="text" id="employeeId" placeholder="e.g., john_sales" required>
+                    <label>{% if lang == 'ar' %}المورد:{% else %}Supplier:{% endif %}</label>
+                    <input type="text" id="ratingSupplier" readonly>
                 </div>
                 <div class="form-group">
-                    <label for="employeeRole">Role</label>
-                    <select id="employeeRole" required>
-                        <option value="">Select Role</option>
-                        <option value="manager">Manager</option>
-                        <option value="sales">Sales</option>
-                        <option value="purchase">Purchase</option>
-                    </select>
+                    <label>{% if lang == 'ar' %}المنتج:{% else %}Product:{% endif %}</label>
+                    <input type="text" id="ratingProduct" readonly>
                 </div>
                 <div class="form-group">
-                    <label for="employeePassword">Password</label>
-                    <input type="password" id="employeePassword" required>
+                    <label>{% if lang == 'ar' %}التقييم:{% else %}Rating:{% endif %}</label>
+                    <div class="star-rating">
+                        <span class="star" data-rating="1">★</span>
+                        <span class="star" data-rating="2">★</span>
+                        <span class="star" data-rating="3">★</span>
+                        <span class="star" data-rating="4">★</span>
+                        <span class="star" data-rating="5">★</span>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Add Employee</button>
+                <div class="form-group">
+                    <label for="ratingFeedback">{% if lang == 'ar' %}التعليق:{% else %}Feedback:{% endif %}</label>
+                    <textarea id="ratingFeedback" rows="4" placeholder="{% if lang == 'ar' %}اكتب تعليقك عن المنتج والخدمة...{% else %}Write your feedback about the product and service...{% endif %}"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">{% if lang == 'ar' %}إرسال التقييم{% else %}Submit Rating{% endif %}</button>
             </form>
         </div>
     </div>
 
+    <!-- Add Department Modal -->
+    <div id="addDepartmentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addDepartmentModal')">&times;</span>
+            <h2>{% if lang == 'ar' %}إضافة قسم جديد{% else %}Add New Department{% endif %}</h2>
+            <form id="addDepartmentForm">
+                <div class="form-group">
+                    <label for="departmentName">{% if lang == 'ar' %}اسم القسم{% else %}Department Name{% endif %}</label>
+                    <input type="text" id="departmentName" required>
+                </div>
+                <div class="form-group">
+                    <label for="departmentDescription">{% if lang == 'ar' %}وصف القسم{% else %}Department Description{% endif %}</label>
+                    <textarea id="departmentDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>{% if lang == 'ar' %}اختر نوع القسم{% else %}Select Department Type{% endif %}</label>
+                    <div class="department-selector">
+                        <div class="department-option" onclick="selectDepartmentType(this, 'الإدارة العليا')">
+                            <h4>{% if lang == 'ar' %}الإدارة العليا{% else %}Executive Management{% endif %}</h4>
+                            <p>CEO, COO, CTO</p>
+                        </div>
+                        <div class="department-option" onclick="selectDepartmentType(this, 'المالية والمحاسبة')">
+                            <h4>{% if lang == 'ar' %}المالية والمحاسبة{% else %}Finance & Accounting{% endif %}</h4>
+                            <p>CFO, Accountants</p>
+                        </div>
+                        <div class="department-option" onclick="selectDepartmentType(this, 'الموارد البشرية')">
+                            <h4>{% if lang == 'ar' %}الموارد البشرية{% else %}Human Resources{% endif %}</h4>
+                            <p>HR Manager, Recruiters</p>
+                        </div>
+                        <div class="department-option" onclick="selectDepartmentType(this, 'التسويق')">
+                            <h4>{% if lang == 'ar' %}التسويق{% else %}Marketing{% endif %}</h4>
+                            <p>Marketing Manager, Specialists</p>
+                        </div>
+                        <div class="department-option" onclick="selectDepartmentType(this, 'المبيعات')">
+                            <h4>{% if lang == 'ar' %}المبيعات{% else %}Sales{% endif %}</h4>
+                            <p>Sales Manager, Representatives</p>
+                        </div>
+                        <div class="department-option" onclick="selectDepartmentType(this, 'العمليات')">
+                            <h4>{% if lang == 'ar' %}العمليات{% else %}Operations{% endif %}</h4>
+                            <p>Operations Manager, Supervisors</p>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="selectedDepartmentType">
+                <button type="submit" class="btn btn-primary">{% if lang == 'ar' %}إضافة القسم{% else %}Add Department{% endif %}</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Employee Modal -->
+    <div id="addEmployeeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addEmployeeModal')">&times;</span>
+            <h2 id="addEmployeeTitle">{% if lang == 'ar' %}إضافة موظف جديد{% else %}Add New Employee{% endif %}</h2>
+            <form id="addEmployeeForm">
+                <div class="form-group">
+                    <label for="employeeName">{% if lang == 'ar' %}اسم الموظف{% else %}Employee Name{% endif %}</label>
+                    <input type="text" id="employeeName" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeId">{% if lang == 'ar' %}معرف الموظف{% else %}Employee ID{% endif %}</label>
+                    <input type="text" id="employeeId" placeholder="e.g., john_sales" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeDepartment">{% if lang == 'ar' %}القسم{% else %}Department{% endif %}</label>
+                    <input type="text" id="employeeDepartment" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="employeePosition">{% if lang == 'ar' %}المنصب{% else %}Position{% endif %}</label>
+                    <input type="text" id="employeePosition" placeholder="{% if lang == 'ar' %}مثل: مدير مبيعات{% else %}e.g., Sales Manager{% endif %}" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeEmail">{% if lang == 'ar' %}البريد الإلكتروني{% else %}Email{% endif %}</label>
+                    <input type="email" id="employeeEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeePhone">{% if lang == 'ar' %}رقم الهاتف{% else %}Phone Number{% endif %}</label>
+                    <input type="tel" id="employeePhone" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeePassword">{% if lang == 'ar' %}كلمة المرور{% else %}Password{% endif %}</label>
+                    <input type="password" id="employeePassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">{% if lang == 'ar' %}إضافة الموظف{% else %}Add Employee{% endif %}</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addTaskModal')">&times;</span>
+            <h2>{% if lang == 'ar' %}إضافة مهمة جديدة{% else %}Add New Task{% endif %}</h2>
+            <form id="addTaskForm">
+                <div class="form-group">
+                    <label for="taskTitle">{% if lang == 'ar' %}عنوان المهمة{% else %}Task Title{% endif %}</label>
+                    <input type="text" id="taskTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">{% if lang == 'ar' %}وصف المهمة{% else %}Task Description{% endif %}</label>
+                    <textarea id="taskDescription" required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="assignedTo">{% if lang == 'ar' %}معين إلى{% else %}Assign To{% endif %}</label>
+                        <select id="assignedTo" required>
+                            <option value="">{% if lang == 'ar' %}اختر موظف{% else %}Select Employee{% endif %}</option>
+                            {% for emp_id, employee in company.employees.items() %}
+                            <option value="{{ emp_id }}">{{ employee.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskReward">{% if lang == 'ar' %}المكافأة (ريال){% else %}Reward (SAR){% endif %}</label>
+                        <input type="number" id="taskReward" min="0" step="100" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="dueDate">{% if lang == 'ar' %}تاريخ الانتهاء{% else %}Due Date{% endif %}</label>
+                    <input type="date" id="dueDate" required>
+                </div>
+                <button type="submit" class="btn btn-primary">{% if lang == 'ar' %}إضافة المهمة{% else %}Add Task{% endif %}</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div id="notificationsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('notificationsModal')">&times;</span>
+            <h2>{% if lang == 'ar' %}الإشعارات{% else %}Notifications{% endif %}</h2>
+            <div class="notifications-list">
+                <div class="notification-item">
+                    <div class="notification-icon">💬</div>
+                    <div class="notification-content">
+                        <h4>{% if lang == 'ar' %}رسالة جديدة{% else %}New Message{% endif %}</h4>
+                        <p>{% if lang == 'ar' %}رسالة جديدة من نسما وشركاهم{% else %}New message from Nesma & Partners{% endif %}</p>
+                        <span class="notification-time">5 {% if lang == 'ar' %}دقائق{% else %}minutes ago{% endif %}</span>
+                    </div>
+                </div>
+                <div class="notification-item">
+                    <div class="notification-icon">✅</div>
+                    <div class="notification-content">
+                        <h4>{% if lang == 'ar' %}مهمة منجزة{% else %}Task Completed{% endif %}</h4>
+                        <p>{% if lang == 'ar' %}تم إنجاز مهمة خدمة العملاء{% else %}Customer service task completed{% endif %}</p>
+                        <span class="notification-time">1 {% if lang == 'ar' %}ساعة{% else %}hour ago{% endif %}</span>
+                    </div>
+                </div>
+                <div class="notification-item">
+                    <div class="notification-icon">🎉</div>
+                    <div class="notification-content">
+                        <h4>{% if lang == 'ar' %}مكافأة مستحقة{% else %}Reward Earned{% endif %}</h4>
+                        <p>{% if lang == 'ar' %}تم صرف مكافأة 1,500 ريال{% else %}Reward of 1,500 SAR has been paid{% endif %}</p>
+                        <span class="notification-time">2 {% if lang == 'ar' %}ساعات{% else %}hours ago{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script src="{{ url_for('static', filename='chat.js') }}"></script>
+    <script src="{{ url_for('static', filename='payment.js') }}"></script>
+    <script src="{{ url_for('static', filename='assign-service.js') }}"></script>
+    <script>
+        let currentChatId = null;
+        let chatInterval = null;
+        
+        // Get current company name
+        const currentCompany = '{{ company.name }}';
+        
+        // Fake chat data
+        const fakeChats = [
+            {
+                chat_id: 'chat_001',
+                other_company: 'Global Materials Supply',
+                product: 'Steel Reinforcement Bars',
+                last_message: { sender: 'Ahmed Al-Rashid', message: 'We can deliver 500 tons by next week' },
+                message_count: 12,
+                messages: [
+                    { sender: currentCompany, message: 'Hello, we need 500 tons of steel reinforcement bars', timestamp: '2024-12-20 09:00' },
+                    { sender: 'Ahmed Al-Rashid', message: 'Good morning! We have that quantity available. What specifications do you need?', timestamp: '2024-12-20 09:15' },
+                    { sender: currentCompany, message: 'Grade 60, diameter 16mm and 20mm mixed', timestamp: '2024-12-20 09:30' },
+                    { sender: 'Ahmed Al-Rashid', message: 'Perfect. Price is $450 per ton. Total would be $225,000', timestamp: '2024-12-20 09:45' },
+                    { sender: currentCompany, message: 'That works for us. What about delivery timeline?', timestamp: '2024-12-20 10:00' },
+                    { sender: 'Ahmed Al-Rashid', message: 'We can deliver 500 tons by next week', timestamp: '2024-12-20 10:15' }
+                ]
+            },
+            {
+                chat_id: 'chat_002',
+                other_company: 'BuildTech Construction',
+                product: 'Concrete Mixers',
+                last_message: { sender: 'Sara Al-Mahmoud', message: 'Payment terms are 30% advance, 70% on delivery' },
+                message_count: 8,
+                messages: [
+                    { sender: currentCompany, message: 'We are interested in your concrete mixers', timestamp: '2024-12-19 14:00' },
+                    { sender: 'Sara Al-Mahmoud', message: 'Great! Which model are you looking for?', timestamp: '2024-12-19 14:20' },
+                    { sender: currentCompany, message: 'We need 3 units of the CM-500 model', timestamp: '2024-12-19 14:35' },
+                    { sender: 'Sara Al-Mahmoud', message: 'Excellent choice. Each unit is $15,000. Total $45,000', timestamp: '2024-12-19 14:50' },
+                    { sender: currentCompany, message: 'What are the payment terms?', timestamp: '2024-12-19 15:10' },
+                    { sender: 'Sara Al-Mahmoud', message: 'Payment terms are 30% advance, 70% on delivery', timestamp: '2024-12-19 15:25' }
+                ]
+            },
+            {
+                chat_id: 'chat_003',
+                other_company: 'ProBuild Materials',
+                product: 'Safety Equipment',
+                last_message: { sender: currentCompany, message: 'Please send us the complete catalog' },
+                message_count: 15,
+                messages: [
+                    { sender: 'Omar Al-Zahra', message: 'Hello! I saw your inquiry about safety equipment', timestamp: '2024-12-18 11:00' },
+                    { sender: currentCompany, message: 'Yes, we need a complete safety package for 200 workers', timestamp: '2024-12-18 11:15' },
+                    { sender: 'Omar Al-Zahra', message: 'We have helmets, vests, boots, and gloves. What specific items?', timestamp: '2024-12-18 11:30' },
+                    { sender: currentCompany, message: 'All of the above. We need 200 of each item', timestamp: '2024-12-18 11:45' },
+                    { sender: 'Omar Al-Zahra', message: 'Total package would be $18,750 for 200 complete sets', timestamp: '2024-12-18 12:00' },
+                    { sender: currentCompany, message: 'Please send us the complete catalog', timestamp: '2024-12-18 12:15' }
+                ]
+            },
+            {
+                chat_id: 'chat_004',
+                other_company: 'SteelWorks Industries',
+                product: 'Structural Steel Beams',
+                last_message: { sender: 'Fatima Al-Qasimi', message: 'Quality certificates will be provided with delivery' },
+                message_count: 20,
+                messages: [
+                    { sender: currentCompany, message: 'We need structural steel beams for a high-rise project', timestamp: '2024-12-17 08:00' },
+                    { sender: 'Fatima Al-Qasimi', message: 'What dimensions and quantities do you require?', timestamp: '2024-12-17 08:20' },
+                    { sender: currentCompany, message: 'I-beams: 50 units of W14x90, 30 units of W18x106', timestamp: '2024-12-17 08:40' },
+                    { sender: 'Fatima Al-Qasimi', message: 'We have those in stock. Total cost is $67,500', timestamp: '2024-12-17 09:00' },
+                    { sender: currentCompany, message: 'Do you provide quality certificates?', timestamp: '2024-12-17 09:20' },
+                    { sender: 'Fatima Al-Qasimi', message: 'Quality certificates will be provided with delivery', timestamp: '2024-12-17 09:40' }
+                ]
+            },
+            {
+                chat_id: 'chat_005',
+                other_company: 'ConcretePro Solutions',
+                product: 'Ready-Mix Concrete',
+                last_message: { sender: 'Hassan Al-Mutairi', message: 'We can start delivery from Monday morning' },
+                message_count: 10,
+                messages: [
+                    { sender: currentCompany, message: 'We need ready-mix concrete for foundation work', timestamp: '2024-12-16 13:00' },
+                    { sender: 'Hassan Al-Mutairi', message: 'What grade and volume do you need?', timestamp: '2024-12-16 13:25' },
+                    { sender: currentCompany, message: 'Grade M25, approximately 800 cubic meters', timestamp: '2024-12-16 13:45' },
+                    { sender: 'Hassan Al-Mutairi', message: 'Price is $40 per cubic meter. Total $32,000', timestamp: '2024-12-16 14:10' },
+                    { sender: currentCompany, message: 'When can you start delivery?', timestamp: '2024-12-16 14:30' },
+                    { sender: 'Hassan Al-Mutairi', message: 'We can start delivery from Monday morning', timestamp: '2024-12-16 14:50' }
+                ]
+            }
+        ];
+
+        // Load chats when chat section is shown
+        function loadChats() {
+            const container = document.getElementById('chat-conversations');
+            container.innerHTML = '';
+            
+            fakeChats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.className = 'chat-item';
+                chatItem.onclick = () => openChat(chat.chat_id, chat.other_company, chat.product);
+                
+                const lastMessage = chat.last_message ? 
+                    `<p class="last-message">${chat.last_message.sender}: ${chat.last_message.message.substring(0, 50)}...</p>` : 
+                    '<p class="last-message">No messages yet</p>';
+                
+                chatItem.innerHTML = `
+                    <div class="chat-preview">
+                        <h4>${chat.other_company}</h4>
+                        <p class="chat-product">Product: ${chat.product}</p>
+                        ${lastMessage}
+                        <span class="message-count">${chat.message_count} messages</span>
+                    </div>
+                `;
+                container.appendChild(chatItem);
+            });
+        }
+        
+        function openChat(chatId, otherCompany, product) {
+            currentChatId = chatId;
+            document.getElementById('chat-title').textContent = `${otherCompany} - ${product}`;
+            document.getElementById('chat-window').style.display = 'block';
+            loadMessages();
+            
+            // Start auto-refresh for messages
+            if (chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(loadMessages, 3000);
+        }
+        
+        function loadMessages() {
+            if (!currentChatId) return;
+            
+            // Find the chat data
+            const chatData = fakeChats.find(chat => chat.chat_id === currentChatId);
+            if (!chatData) return;
+            
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = '';
+            
+            chatData.messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <strong>${msg.sender}</strong>
+                        <span class="timestamp">${msg.timestamp}</span>
+                    </div>
+                    <div class="message-content">${msg.message}</div>
+                `;
+                container.appendChild(messageDiv);
+            });
+            
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function sendMessage() {
+            if (!currentChatId) return;
+            
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Find the chat and add the message
+            const chatData = fakeChats.find(chat => chat.chat_id === currentChatId);
+            if (chatData) {
+                const now = new Date();
+                const timestamp = now.getFullYear() + '-' + 
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(now.getDate()).padStart(2, '0') + ' ' + 
+                    String(now.getHours()).padStart(2, '0') + ':' + 
+                    String(now.getMinutes()).padStart(2, '0');
+                
+                chatData.messages.push({
+                    sender: '{{ company.name }}',
+                    message: message,
+                    timestamp: timestamp
+                });
+                
+                chatData.message_count++;
+                chatData.last_message = {
+                    sender: currentCompany,
+                    message: message
+                };
+                
+                input.value = '';
+                loadMessages();
+                loadChats(); // Refresh chat list to show updated last message
+            }
+        }
+        
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        function closeChatWindow() {
+            document.getElementById('chat-window').style.display = 'none';
+            currentChatId = null;
+            if (chatInterval) {
+                clearInterval(chatInterval);
+                chatInterval = null;
+            }
+        }
+        
+        function contactSellerCRM(companyId, productTitle) {
+            const message = prompt(`Send a message about "${productTitle}":`);
+            if (message) {
+                fetch('/api/contact_company', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        company: companyId,
+                        product: productTitle,
+                        message: message
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Message sent successfully!');
+                        // Switch to chat section and load chats
+                        showSection('chat');
+                        loadChats();
+                    } else {
+                        alert('Failed to send message: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending message:', error);
+                    alert('Error sending message. Please try again.');
+                });
+            }
+        }
+        
+        // Load chats when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const section = urlParams.get('section');
+            const seller = urlParams.get('seller');
+            const product = urlParams.get('product');
+            
+            // If coming from contact seller, show chat section and create chat
+            if (section === 'chat' && seller && product) {
+                showSection('chat');
+                setTimeout(() => {
+                    createNewChat(seller, product);
+                }, 500);
+            }
+            
+            // If section parameter is employees, show department management
+            if (section === 'employees') {
+                showSection('employees');
+            }
+            
+            // Load chats immediately
+            loadChats();
+            
+            // Load dark mode preference
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+        });
+        
+        // Override showSection to load chats when chat section is shown
+        const originalShowSection = window.showSection;
+        window.showSection = function(sectionId) {
+            if (originalShowSection) {
+                originalShowSection(sectionId);
+            }
+            if (sectionId === 'chat') {
+                setTimeout(loadChats, 100);
+            }
+        };
+        
+        function createNewChat(sellerId, productId) {
+            fetch('/api/create_chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    seller_company: sellerId,
+                    product_id: productId,
+                    initial_message: 'Hello! I am interested in your product.'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadChats();
+                    setTimeout(() => {
+                        openChat(data.chat_id, data.seller_name, data.product_name);
+                    }, 500);
+                } else {
+                    alert('Error creating chat: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error creating chat:', error);
+                alert('Error creating chat');
+            });
+        }
+        
+        function loadContracts() {
+            // Contracts are already loaded in the HTML template
+            console.log('Contracts are displayed');
+        }
+        
+        function generateSampleContract() {
+            const container = document.getElementById('contractsList');
+            const newContract = document.createElement('div');
+            newContract.className = 'contract-card';
+            const randomAmount = (Math.random() * 100000 + 25000).toFixed(2);
+            const currentDate = new Date().toISOString().split('T')[0];
+            const companyName = '{{ company.name }}';
+            const contractId = 'SAMPLE-' + Date.now();
+            
+            newContract.innerHTML = `
+                <h3>New Sample Contract - ${new Date().toLocaleDateString()}</h3>
+                <div class="contract-info">
+                    <p><strong>Buyer:</strong> ${companyName}</p>
+                    <p><strong>Seller:</strong> Sample Supplier Co.</p>
+                    <p><strong>Amount:</strong> $${randomAmount}</p>
+                    <p><strong>Date:</strong> ${currentDate}</p>
+                    <p><strong>Status:</strong> <span class="status-active">Active</span></p>
+                </div>
+                <div class="contract-actions">
+                    <button class="btn btn-primary" onclick="showContractInline('${contractId}')">View Contract</button>
+                    <button class="btn btn-secondary" onclick="printContractInline()">Print</button>
+                </div>
+            `;
+            container.appendChild(newContract);
+            alert('Sample contract generated successfully!');
+        }
+        
+        function showContractInline(contractId) {
+            // Hide contract list and show contract detail
+            document.getElementById('contractsList').style.display = 'none';
+            document.getElementById('contractDetail').style.display = 'block';
+            document.getElementById('backToListBtn').style.display = 'inline-block';
+            
+            // Update contract details based on ID
+            const contracts = {
+                'CONTRACT-001': {
+                    number: 'CONTRACT-001',
+                    date: 'December 1, 2024',
+                    buyer: '{{ company.name }}',
+                    seller: 'Construction Equipment Co.',
+                    product: 'Heavy Construction Equipment',
+                    quantity: '2',
+                    unitPrice: '$225,000.00',
+                    total: '$450,000.00'
+                },
+                'CONTRACT-002': {
+                    number: 'CONTRACT-002',
+                    date: 'November 28, 2024',
+                    buyer: 'Al-Saif Construction',
+                    seller: '{{ company.name }}',
+                    product: 'Steel Reinforcement Bars',
+                    quantity: '100',
+                    unitPrice: '$2,800.00',
+                    total: '$280,000.00'
+                },
+                'CONTRACT-003': {
+                    number: 'CONTRACT-003',
+                    date: 'November 25, 2024',
+                    buyer: '{{ company.name }}',
+                    seller: 'Torbiona Financial Services',
+                    product: 'Financing Agreement',
+                    quantity: '1',
+                    unitPrice: '$125,000.00',
+                    total: '$125,000.00'
+                }
+            };
+            
+            const contract = contracts[contractId] || contracts['CONTRACT-001'];
+            
+            // Convert amount to words
+            function numberToWords(amount) {
+                const amountNum = parseFloat(amount.replace(/[$,]/g, ''));
+                if (amountNum === 450000) return 'Four Hundred Fifty Thousand US Dollars ($450,000.00)';
+                if (amountNum === 280000) return 'Two Hundred Eighty Thousand US Dollars ($280,000.00)';
+                if (amountNum === 125000) return 'One Hundred Twenty-Five Thousand US Dollars ($125,000.00)';
+                return `${amountNum.toLocaleString()} US Dollars (${amount})`;
+            }
+            
+            // Update contract details
+            document.getElementById('contractNumber').textContent = contract.number;
+            document.getElementById('contractDate').textContent = contract.date;
+            document.getElementById('buyerName').textContent = contract.buyer;
+            document.getElementById('sellerName').textContent = contract.seller;
+            document.getElementById('productDescription').textContent = contract.product;
+            document.getElementById('productQuantity').textContent = contract.quantity;
+            document.getElementById('unitPrice').textContent = contract.unitPrice;
+            document.getElementById('totalAmount').textContent = contract.total;
+            document.getElementById('grandTotal').textContent = numberToWords(contract.total);
+        }
+        
+        function hideContractView() {
+            document.getElementById('contractsList').style.display = 'block';
+            document.getElementById('contractDetail').style.display = 'none';
+            document.getElementById('backToListBtn').style.display = 'none';
+        }
+        
+        function printContractInline() {
+            const contractDetail = document.getElementById('contractDetail');
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Contract</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .contract-document { max-width: 800px; margin: 0 auto; }
+                        .contract-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                        .contract-section { margin-bottom: 25px; }
+                        .contract-section h3 { color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+                        .goods-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                        .goods-table th, .goods-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        .goods-table th { background-color: #f5f5f5; }
+                        .signature-section { display: flex; justify-content: space-between; margin-top: 50px; }
+                        .signature-block { text-align: center; }
+                        .signature-line { border-bottom: 1px solid #333; width: 200px; height: 50px; margin: 20px 0; }
+                    </style>
+                </head>
+                <body>
+                    ${contractDetail.innerHTML}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+        
+
+        
+        function viewContract(contractId) {
+            window.open('/contract/' + contractId, '_blank');
+        }
+        
+        function printContract(contractId) {
+            const printWindow = window.open('/contract/' + contractId, '_blank');
+            printWindow.onload = function() {
+                printWindow.print();
+            };
+        }
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+        
+        function purchasePackage(packageId, price) {
+            const packageNames = {
+                1: '{{ t.package_1 }}',
+                2: '{{ t.package_2 }}',
+                3: '{{ t.package_3 }}'
+            };
+            
+            showConfirmModal(
+                '{% if lang == "ar" %}تأكيد الشراء{% else %}Confirm Purchase{% endif %}',
+                `{% if lang == 'ar' %}هل تريد شراء ${packageNames[packageId]} بسعر ${price} ريال؟{% else %}Do you want to purchase ${packageNames[packageId]} for ${price} SAR?{% endif %}`,
+                function() {
+                    showSuccessModal(
+                        '{% if lang == "ar" %}تم الشراء بنجاح{% else %}Purchase Successful{% endif %}',
+                        '{% if lang == "ar" %}تم شراء الباقة بنجاح! سيتم تفعيلها خلال دقائق.{% else %}Package purchased successfully! It will be activated within minutes.{% endif %}'
+                    );
+                }
+            );
+        }
+        
+        function showAddTaskModal() {
+            document.getElementById('addTaskModal').style.display = 'block';
+        }
+        
+        function showAddDepartmentModal() {
+            document.getElementById('addDepartmentModal').style.display = 'block';
+        }
+        
+        function showAddEmployeeModal(department) {
+            document.getElementById('addEmployeeModal').style.display = 'block';
+            if (department) {
+                document.getElementById('employeeDepartment').value = department;
+                document.getElementById('addEmployeeTitle').textContent = 
+                    '{% if lang == "ar" %}إضافة موظف إلى ' + department + '{% else %}Add Employee to ' + department + '{% endif %}';
+            }
+        }
+        
+        function selectDepartmentType(element, type) {
+            // Remove selected class from all options
+            document.querySelectorAll('.department-option').forEach(opt => opt.classList.remove('selected'));
+            // Add selected class to clicked option
+            element.classList.add('selected');
+            // Set hidden input value
+            document.getElementById('selectedDepartmentType').value = type;
+        }
+        
+        // Handle department form submission
+        document.getElementById('addDepartmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const departmentName = document.getElementById('departmentName').value;
+            const departmentType = document.getElementById('selectedDepartmentType').value;
+            
+            if (!departmentType) {
+                showSuccessModal(
+                    '{% if lang == "ar" %}خطأ{% else %}Error{% endif %}',
+                    '{% if lang == "ar" %}يرجى اختيار نوع القسم{% else %}Please select a department type{% endif %}'
+                );
+                return;
+            }
+            
+            // Add department to the grid
+            const departmentsGrid = document.querySelector('.departments-grid');
+            const newDepartmentCard = document.createElement('div');
+            newDepartmentCard.className = 'department-card';
+            newDepartmentCard.innerHTML = `
+                <div class="department-header">
+                    <h4>${departmentName}</h4>
+                    <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('${departmentName}')">+</button>
+                </div>
+                <div class="department-employees">
+                    <p style="color: #666; font-style: italic;">{% if lang == 'ar' %}لا يوجد موظفون بعد{% else %}No employees yet{% endif %}</p>
+                </div>
+            `;
+            departmentsGrid.appendChild(newDepartmentCard);
+            
+            // Close modal and reset form
+            closeModal('addDepartmentModal');
+            document.getElementById('addDepartmentForm').reset();
+            document.querySelectorAll('.department-option').forEach(opt => opt.classList.remove('selected'));
+            
+            showSuccessModal(
+                '{% if lang == "ar" %}تم إضافة القسم{% else %}Department Added{% endif %}',
+                '{% if lang == "ar" %}تم إضافة القسم بنجاح{% else %}Department added successfully{% endif %}'
+            );
+        });
+        
+        // Handle employee form submission
+        document.getElementById('addEmployeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const employeeName = document.getElementById('employeeName').value;
+            const employeePosition = document.getElementById('employeePosition').value;
+            const department = document.getElementById('employeeDepartment').value;
+            
+            // Find the department card and add employee
+            const departmentCards = document.querySelectorAll('.department-card');
+            departmentCards.forEach(card => {
+                const departmentTitle = card.querySelector('h4').textContent;
+                if (departmentTitle === department) {
+                    const employeesContainer = card.querySelector('.department-employees');
+                    
+                    // Remove "no employees" message if it exists
+                    const noEmployeesMsg = employeesContainer.querySelector('p');
+                    if (noEmployeesMsg) {
+                        noEmployeesMsg.remove();
+                    }
+                    
+                    // Add new employee
+                    const newEmployee = document.createElement('div');
+                    newEmployee.className = 'employee-mini-card';
+                    const initials = employeeName.split(' ').map(n => n[0]).join('').toUpperCase();
+                    newEmployee.innerHTML = `
+                        <div class="employee-avatar">${initials}</div>
+                        <span>${employeeName}</span>
+                    `;
+                    employeesContainer.appendChild(newEmployee);
+                }
+            });
+            
+            // Close modal and reset form
+            closeModal('addEmployeeModal');
+            document.getElementById('addEmployeeForm').reset();
+            
+            showSuccessModal(
+                '{% if lang == "ar" %}تم إضافة الموظف{% else %}Employee Added{% endif %}',
+                '{% if lang == "ar" %}تم إضافة الموظف بنجاح{% else %}Employee added successfully{% endif %}'
+            );
+        });
+        
+        function showAssignModal(productId, productTitle, productCompany) {
+            const modal = document.createElement('div');
+            modal.className = 'custom-modal';
+            modal.innerHTML = `
+                <div class="custom-modal-content">
+                    <div class="custom-modal-header">
+                        <h3>{% if lang == 'ar' %}تعيين خدمة توصيل{% else %}Assign Delivery Service{% endif %}</h3>
+                        <span class="custom-modal-close" onclick="closeCustomModal()">&times;</span>
+                    </div>
+                    <div class="custom-modal-body">
+                        <div class="assignment-form">
+                            <div class="product-summary">
+                                <h4>${productTitle}</h4>
+                                <p>{% if lang == 'ar' %}من:{% else %}From:{% endif %} ${productCompany}</p>
+                            </div>
+                            <div class="form-group">
+                                <label>{% if lang == 'ar' %}نوع الخدمة{% else %}Service Type{% endif %}</label>
+                                <select id="serviceSelect" class="service-select">
+                                    <option value="">{% if lang == 'ar' %}اختر خدمة{% else %}Select Service{% endif %}</option>
+                                    <option value="fast_delivery">خدمة توصيل سريعة - 50 SAR</option>
+                                    <option value="standard_delivery">خدمة توصيل عادية - 25 SAR</option>
+                                    <option value="heavy_equipment">نقل المعدات الثقيلة - 200 SAR</option>
+                                </select>
+                            </div>
+                            <div class="pricing-section">
+                                <h5>{% if lang == 'ar' %}التسعير حسب الكمية{% else %}Quantity-based Pricing{% endif %}</h5>
+                                <div class="quantity-ranges">
+                                    <div class="range-input">
+                                        <label>1-10:</label>
+                                        <input type="number" id="price1" placeholder="Price" step="0.01">
+                                        <span>SAR</span>
+                                    </div>
+                                    <div class="range-input">
+                                        <label>11-50:</label>
+                                        <input type="number" id="price2" placeholder="Price" step="0.01">
+                                        <span>SAR</span>
+                                    </div>
+                                    <div class="range-input">
+                                        <label>51+:</label>
+                                        <input type="number" id="price3" placeholder="Price" step="0.01">
+                                        <span>SAR</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="custom-modal-footer">
+                        <button class="btn btn-secondary" onclick="closeCustomModal()">{% if lang == 'ar' %}إلغاء{% else %}Cancel{% endif %}</button>
+                        <button class="btn btn-primary" onclick="assignDeliveryService(${productId})">{% if lang == 'ar' %}تعيين{% else %}Assign{% endif %}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function assignDeliveryService(productId) {
+            const serviceId = document.getElementById('serviceSelect').value;
+            if (!serviceId) {
+                showSuccessModal('{% if lang == "ar" %}خطأ{% else %}Error{% endif %}', '{% if lang == "ar" %}يرجى اختيار نوع الخدمة{% else %}Please select a service type{% endif %}');
+                return;
+            }
+            
+            const pricePerQuantity = {
+                '1-10': parseFloat(document.getElementById('price1').value) || 0,
+                '11-50': parseFloat(document.getElementById('price2').value) || 0,
+                '51+': parseFloat(document.getElementById('price3').value) || 0
+            };
+            
+            fetch('/api/assign_delivery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    product_id: productId,
+                    service_id: serviceId,
+                    price_per_quantity: pricePerQuantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                closeCustomModal();
+                if (data.success) {
+                    showSuccessModal(
+                        '{% if lang == "ar" %}تم التعيين بنجاح{% else %}Assignment Successful{% endif %}',
+                        '{% if lang == "ar" %}تم تعيين خدمة التوصيل للمنتج بنجاح{% else %}Delivery service assigned to product successfully{% endif %}'
+                    );
+                } else {
+                    showSuccessModal('{% if lang == "ar" %}خطأ{% else %}Error{% endif %}', data.message || '{% if lang == "ar" %}حدث خطأ{% else %}An error occurred{% endif %}');
+                }
+            })
+            .catch(error => {
+                console.error('Error assigning delivery service:', error);
+                showSuccessModal('{% if lang == "ar" %}خطأ{% else %}Error{% endif %}', '{% if lang == "ar" %}حدث خطأ في الشبكة{% else %}Network error occurred{% endif %}');
+            });
+        }
+        
+        function completeTask(taskId) {
+            showConfirmModal(
+                '{% if lang == "ar" %}تأكيد إنجاز المهمة{% else %}Confirm Task Completion{% endif %}',
+                '{% if lang == "ar" %}هل تريد إنجاز هذه المهمة؟{% else %}Mark this task as completed?{% endif %}',
+                function() {
+                    showSuccessModal(
+                        '{% if lang == "ar" %}تم إنجاز المهمة{% else %}Task Completed{% endif %}',
+                        '{% if lang == "ar" %}تم إنجاز المهمة بنجاح! سيتم صرف المكافأة.{% else %}Task completed successfully! Reward will be processed.{% endif %}'
+                    );
+                }
+            );
+        }
+        
+        function showNotifications() {
+            document.getElementById('notificationsModal').style.display = 'block';
+        }
+        
+        function showConfirmModal(title, message, onConfirm) {
+            const modal = document.createElement('div');
+            modal.className = 'custom-modal';
+            modal.innerHTML = `
+                <div class="custom-modal-content">
+                    <div class="custom-modal-header">
+                        <h3>${title}</h3>
+                        <span class="custom-modal-close" onclick="closeCustomModal()">&times;</span>
+                    </div>
+                    <div class="custom-modal-body">
+                        <p>${message}</p>
+                    </div>
+                    <div class="custom-modal-footer">
+                        <button class="btn btn-secondary" onclick="closeCustomModal()">{% if lang == 'ar' %}إلغاء{% else %}Cancel{% endif %}</button>
+                        <button class="btn btn-primary" onclick="confirmAction()">{% if lang == 'ar' %}تأكيد{% else %}Confirm{% endif %}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            window.confirmAction = function() {
+                closeCustomModal();
+                if (onConfirm) onConfirm();
+            };
+        }
+        
+        function showSuccessModal(title, message) {
+            const modal = document.createElement('div');
+            modal.className = 'custom-modal';
+            modal.innerHTML = `
+                <div class="custom-modal-content success">
+                    <div class="custom-modal-header">
+                        <h3>✓ ${title}</h3>
+                        <span class="custom-modal-close" onclick="closeCustomModal()">&times;</span>
+                    </div>
+                    <div class="custom-modal-body">
+                        <p>${message}</p>
+                    </div>
+                    <div class="custom-modal-footer">
+                        <button class="btn btn-primary" onclick="closeCustomModal()">{% if lang == 'ar' %}حسناً{% else %}OK{% endif %}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function closeCustomModal() {
+            const modal = document.querySelector('.custom-modal');
+            if (modal) modal.remove();
+        }
+        
+        function saveCompanyPage() {
+            const aboutUs = document.getElementById('aboutUs').value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+            const address = document.getElementById('address').value;
+            
+            showSuccessModal(
+                '{% if lang == "ar" %}تم الحفظ{% else %}Saved Successfully{% endif %}',
+                '{% if lang == "ar" %}تم حفظ تغييرات صفحة الشركة بنجاح{% else %}Company page changes saved successfully{% endif %}'
+            );
+        }
+        
+        function previewCompanyPage() {
+            window.open('/company/{{ session.company_id }}', '_blank');
+        }
+        
+        function showRatingModal(orderId, supplier, product) {
+            document.getElementById('ratingModal').style.display = 'block';
+            document.getElementById('ratingOrderId').value = orderId;
+            document.getElementById('ratingSupplier').value = supplier;
+            document.getElementById('ratingProduct').value = product;
+            
+            // Reset stars
+            document.querySelectorAll('.star').forEach(star => {
+                star.classList.remove('selected');
+            });
+        }
+        
+        // Star rating functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const stars = document.querySelectorAll('.star');
+            let selectedRating = 0;
+            
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    selectedRating = parseInt(this.dataset.rating);
+                    
+                    // Remove selected class from all stars
+                    stars.forEach(s => s.classList.remove('selected'));
+                    
+                    // Add selected class to clicked star and all previous stars
+                    for (let i = 0; i < selectedRating; i++) {
+                        stars[i].classList.add('selected');
+                    }
+                });
+                
+                star.addEventListener('mouseover', function() {
+                    const hoverRating = parseInt(this.dataset.rating);
+                    
+                    // Highlight stars on hover
+                    stars.forEach(s => s.classList.remove('hover'));
+                    for (let i = 0; i < hoverRating; i++) {
+                        stars[i].classList.add('hover');
+                    }
+                });
+            });
+            
+            // Handle rating form submission
+            document.getElementById('ratingForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const orderId = document.getElementById('ratingOrderId').value;
+                const feedback = document.getElementById('ratingFeedback').value;
+                
+                if (selectedRating === 0) {
+                    showSuccessModal(
+                        '{% if lang == "ar" %}خطأ{% else %}Error{% endif %}',
+                        '{% if lang == "ar" %}يرجى اختيار تقييم{% else %}Please select a rating{% endif %}'
+                    );
+                    return;
+                }
+                
+                // Close modal and show success
+                closeModal('ratingModal');
+                showSuccessModal(
+                    '{% if lang == "ar" %}تم إرسال التقييم{% else %}Rating Submitted{% endif %}',
+                    '{% if lang == "ar" %}شكراً لك على تقييمك{% else %}Thank you for your feedback{% endif %}'
+                );
+                
+                // Reset form
+                document.getElementById('ratingForm').reset();
+                selectedRating = 0;
+                stars.forEach(s => s.classList.remove('selected'));
+            });
+        });
+        
+        function buyProductCRM(companyId, productId, productTitle, price) {
+            var quantity = 1;
+            var quantityInput = document.getElementById('crm-qty-' + productId);
+            if (quantityInput) {
+                quantity = parseInt(quantityInput.value) || 1;
+            }
+            var total = (price * quantity).toFixed(2);
+            alert('Buying ' + quantity + ' x ' + productTitle + ' for $' + total);
+        }
+        
+        function showTorbionePayment(companyId, productId, productTitle, quantity, unitPrice, totalPrice) {
+            var modal = document.createElement('div');
+            modal.className = 'torbiona-modal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
+            
+            modal.innerHTML = '<div class="torbiona-modal-content enhanced">' +
+                '<div class="torbiona-header">' +
+                '<h2>🔒 Secure Payment with Torbiona</h2>' +
+                '<p>Complete your purchase securely</p>' +
+                '<span class="close" onclick="closeTorbioneModal()">&times;</span>' +
+                '</div>' +
+                '<div class="torbiona-body">' +
+                '<div class="order-summary-enhanced">' +
+                '<div class="section-title">📦 Order Summary</div>' +
+                '<div class="product-item">' +
+                '<div class="product-name">' + productTitle + '</div>' +
+                '<div class="product-calc">Qty: ' + quantity + ' × $' + unitPrice + '</div>' +
+                '<div class="product-total">Product Total: <span class="price">$' + totalPrice + '</span></div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="delivery-section-enhanced">' +
+                '<div class="section-title">🚚 Delivery Options</div>' +
+                '<div class="delivery-grid">' +
+                '<div class="delivery-card" onclick="selectDeliveryCard(this, \'fast_50\', ' + totalPrice + ')">' +
+                '<input type="radio" name="delivery" value="fast_50" style="display:none;">' +
+                '<div class="delivery-header">⚡ Fast Delivery</div>' +
+                '<div class="delivery-company">فاست لوجيستك</div>' +
+                '<div class="delivery-time">Same Day</div>' +
+                '<div class="delivery-price">50 SAR</div>' +
+                '</div>' +
+                '<div class="delivery-card" onclick="selectDeliveryCard(this, \'standard_25\', ' + totalPrice + ')">' +
+                '<input type="radio" name="delivery" value="standard_25" style="display:none;">' +
+                '<div class="delivery-header">📦 Standard</div>' +
+                '<div class="delivery-company">فاست لوجيستك</div>' +
+                '<div class="delivery-time">2-3 Days</div>' +
+                '<div class="delivery-price">25 SAR</div>' +
+                '</div>' +
+                '<div class="delivery-card selected" onclick="selectDeliveryCard(this, \'none_0\', ' + totalPrice + ')">' +
+                '<input type="radio" name="delivery" value="none_0" checked style="display:none;">' +
+                '<div class="delivery-header">🏪 Pickup</div>' +
+                '<div class="delivery-company">Self Pickup</div>' +
+                '<div class="delivery-time">No Delivery</div>' +
+                '<div class="delivery-price">Free</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="payment-section-enhanced">' +
+                '<div class="section-title">💳 Payment Method</div>' +
+                '<div class="payment-grid">' +
+                '<div class="payment-card selected" onclick="selectPaymentCard(this, \'torbiona\')">' +
+                '<input type="radio" name="payment" value="torbiona" checked style="display:none;">' +
+                '<div class="payment-icon">🔒</div>' +
+                '<div class="payment-name">Torbiona</div>' +
+                '<div class="payment-desc">Secure financing</div>' +
+                '</div>' +
+                '<div class="payment-card" onclick="selectPaymentCard(this, \'pay-now\')">' +
+                '<input type="radio" name="payment" value="pay-now" style="display:none;">' +
+                '<div class="payment-icon">💳</div>' +
+                '<div class="payment-name">Pay Now</div>' +
+                '<div class="payment-desc">Instant payment</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="total-section">' +
+                '<div class="total-breakdown">' +
+                '<div class="total-line"><span>Product Total:</span><span>$' + totalPrice + '</span></div>' +
+                '<div class="total-line"><span>Delivery Fee:</span><span id="deliveryFeeDisplay">Free</span></div>' +
+                '<div class="total-line final"><span>Final Total:</span><span id="finalTotal">$' + totalPrice + '</span></div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="torbiona-footer">' +
+                '<button class="complete-btn" onclick="processTorbionePayment(' + "'" + companyId + "','" + productId + "','" + productTitle + "','" + quantity + "','" + totalPrice + "')">' +
+                '<span class="btn-icon">🔐</span>' +
+                '<span class="btn-text">Complete Purchase</span>' +
+                '</button>' +
+                '</div>' +
+                '</div>';
+            
+            document.body.appendChild(modal);
+        }
+        
+        function showTorbionePaymentOriginal(companyId, productId, productTitle, quantity, unitPrice, totalPrice) {
+            var modal = document.createElement('div');
+            modal.className = 'torbiona-modal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
+            
+            modal.innerHTML = '<div class="torbiona-modal-content enhanced">' +
+                '<div class="torbiona-header">' +
+                '<h2>🔒 Secure Payment with Torbiona</h2>' +
+                '<p>Complete your purchase securely</p>' +
+                '<span class="close" onclick="closeTorbioneModal()">&times;</span>' +
+                '</div>' +
+                '<div class="torbiona-body">' +
+                '<div class="order-summary-enhanced">' +
+                '<div class="section-title">📦 Order Summary</div>' +
+                '<div class="product-item">' +
+                '<div class="product-name">' + productTitle + '</div>' +
+                '<div class="product-calc">Qty: ' + quantity + ' × $' + unitPrice + '</div>' +
+                '<div class="product-total">Product Total: <span class="price">$' + totalPrice + '</span></div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="delivery-section-enhanced">' +
+                '<div class="section-title">🚚 Delivery Options</div>' +
+                '<div class="delivery-grid">' +
+                '<div class="delivery-card" onclick="selectDeliveryCard(this, \'fast_50\', ' + totalPrice + ')">' +
+                '<input type="radio" name="delivery" value="fast_50" style="display:none;">' +
+                '<div class="delivery-header">⚡ Fast Delivery</div>' +
+                '<div class="delivery-company">فاست لوجيستك</div>' +
+                '<div class="delivery-time">Same Day</div>' +
+                '<div class="delivery-price">50 SAR</div>' +
+                '</div>' +
+                '<div class="delivery-card" onclick="selectDeliveryCard(this, \'standard_25\', ' + totalPrice + ')">' +
+                '<input type="radio" name="delivery" value="standard_25" style="display:none;">' +
+                '<div class="delivery-header">📦 Standard</div>' +
+                '<div class="delivery-company">فاست لوجيستك</div>' +
+                '<div class="delivery-time">2-3 Days</div>' +
+                '<div class="delivery-price">25 SAR</div>' +
+                '</div>' +
+                '<div class="delivery-card selected" onclick="selectDeliveryCard(this, \'none_0\', ' + totalPrice + ')">' +
+                '<input type="radio" name="delivery" value="none_0" checked style="display:none;">' +
+                '<div class="delivery-header">🏪 Pickup</div>' +
+                '<div class="delivery-company">Self Pickup</div>' +
+                '<div class="delivery-time">No Delivery</div>' +
+                '<div class="delivery-price">Free</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="payment-section-enhanced">' +
+                '<div class="section-title">💳 Payment Method</div>' +
+                '<div class="payment-grid">' +
+                '<div class="payment-card selected" onclick="selectPaymentCard(this, \'torbiona\')">' +
+                '<input type="radio" name="payment" value="torbiona" checked style="display:none;">' +
+                '<div class="payment-icon">🔒</div>' +
+                '<div class="payment-name">Torbiona</div>' +
+                '<div class="payment-desc">Secure financing</div>' +
+                '</div>' +
+                '<div class="payment-card" onclick="selectPaymentCard(this, \'pay-now\')">' +
+                '<input type="radio" name="payment" value="pay-now" style="display:none;">' +
+                '<div class="payment-icon">💳</div>' +
+                '<div class="payment-name">Pay Now</div>' +
+                '<div class="payment-desc">Instant payment</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="total-section">' +
+                '<div class="total-breakdown">' +
+                '<div class="total-line"><span>Product Total:</span><span>$' + totalPrice + '</span></div>' +
+                '<div class="total-line"><span>Delivery Fee:</span><span id="deliveryFeeDisplay">Free</span></div>' +
+                '<div class="total-line final"><span>Final Total:</span><span id="finalTotal">$' + totalPrice + '</span></div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="torbiona-footer">' +
+                '<button class="complete-btn" onclick="processTorbionePayment(' + "'" + companyId + "','" + productId + "','" + productTitle + "','" + quantity + "','" + totalPrice + "')">' +
+                '<span class="btn-icon">🔐</span>' +
+                '<span class="btn-text">Complete Purchase</span>' +
+                '</button>' +
+                '</div>' +
+                '</div>';
+            
+            document.body.appendChild(modal);
+        }
+        
+        function processTorbionePayment(companyId, productId, productTitle, quantity, totalPrice) {
+            var paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+            var deliveryOption = document.querySelector('input[name="delivery"]:checked');
+            var deliveryFee = deliveryOption ? parseInt(deliveryOption.value.split('_')[1]) : 0;
+            var finalTotal = (parseFloat(totalPrice) + deliveryFee).toFixed(2);
+            
+            closeTorbioneModal();
+            showSuccessModal(
+                '{% if lang == "ar" %}تم الشراء بنجاح{% else %}Purchase Successful{% endif %}',
+                `{% if lang == 'ar' %}تم شراء ${productTitle} بنجاح. المجموع: $${finalTotal}{% else %}Successfully purchased ${productTitle}. Total: $${finalTotal}{% endif %}`
+            );
+        }
+        
+        function closeTorbioneModal() {
+            var modal = document.querySelector('.torbiona-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function openChat() {
+            console.log('Contact button clicked!');
+            document.body.style.backgroundColor = 'red';
+            setTimeout(() => {
+                document.body.style.backgroundColor = '';
+            }, 1000);
+        }
+        
+        function showCustomModal(title, message) {
+            showSuccessModal(title, message);
+        }
+        
+        function selectDeliveryCard(card, value, basePrice) {
+            // Remove selected class from all delivery cards
+            document.querySelectorAll('.delivery-card').forEach(c => c.classList.remove('selected'));
+            // Add selected class to clicked card
+            card.classList.add('selected');
+            // Check the radio button
+            card.querySelector('input[type="radio"]').checked = true;
+            
+            // Update total
+            var deliveryFee = parseInt(value.split('_')[1]);
+            var finalTotal = (parseFloat(basePrice) + deliveryFee).toFixed(2);
+            document.getElementById('finalTotal').textContent = '$' + finalTotal;
+            document.getElementById('deliveryFeeDisplay').textContent = deliveryFee === 0 ? 'Free' : deliveryFee + ' SAR';
+        }
+        
+        function selectPaymentCard(card, value) {
+            // Remove selected class from all payment cards
+            document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('selected'));
+            // Add selected class to clicked card
+            card.classList.add('selected');
+            // Check the radio button
+            card.querySelector('input[type="radio"]').checked = true;
+        }
+        
+
+        
+
+        
+
+    </script>
 </body>
 </html>

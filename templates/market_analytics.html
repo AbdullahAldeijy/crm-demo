@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t.market_analytics }} - {{ t.site_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="{% if lang == 'ar' %}rtl{% endif %}">
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo"><a href="{{ url_for('index') }}">{{ t.site_name }}</a> - {{ company.name }}</h1>
+            <div class="nav-info">
+                <div class="nav-buttons">
+                    <a href="{{ url_for('crm_dashboard') }}" class="btn btn-info">{{ t.crm_dashboard }}</a>
+                    <div class="nav-controls">
+                        <button onclick="toggleDarkMode()" class="btn btn-dark-toggle" title="Toggle Dark Mode">
+                            <span class="dark-icon">🌙</span>
+                            <span class="light-icon">☀️</span>
+                        </button>
+                        <div class="language-switcher">
+                            <a href="{{ url_for('market_analytics', lang='en') }}" class="lang-btn {% if lang == 'en' %}active{% endif %}">EN</a>
+                            <a href="{{ url_for('market_analytics', lang='ar') }}" class="lang-btn {% if lang == 'ar' %}active{% endif %}">عربي</a>
+                        </div>
+                    </div>
+                </div>
+                <span class="user-info">
+                    {% if session.user_type == 'employee' %}
+                        {{ company.employees[session.employee_id].name }} ({{ session.role|title }})
+                    {% else %}
+                        {{ t.company_admin }}
+                    {% endif %}
+                </span>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary">{{ t.logout }}</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="market-analytics-container">
+        <div class="analytics-header">
+            <h1>{{ t.market_analytics }}</h1>
+            <p>{% if lang == 'ar' %}تحليلات شاملة للسوق والحملات التسويقية{% else %}Comprehensive Market and Campaign Analytics{% endif %}</p>
+        </div>
+
+        <!-- Supply & Demand Balance Section -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h2>{{ t.supply_demand }}</h2>
+                <div class="section-actions">
+                    <button class="btn btn-primary" onclick="downloadReport('supply-demand')">
+                        {% if lang == 'ar' %}تنزيل التقرير{% else %}Download Report{% endif %}
+                    </button>
+                </div>
+            </div>
+            
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <h3>{% if lang == 'ar' %}نظرة عامة على السوق{% else %}Market Overview{% endif %}</h3>
+                    <div class="market-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">{% if lang == 'ar' %}إجمالي العرض{% else %}Total Supply{% endif %}</span>
+                            <span class="stat-value">2,847</span>
+                            <span class="stat-change positive">+12.5%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">{% if lang == 'ar' %}إجمالي الطلب{% else %}Total Demand{% endif %}</span>
+                            <span class="stat-value">3,156</span>
+                            <span class="stat-change positive">+8.3%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">{% if lang == 'ar' %}فجوة العرض والطلب{% else %}Supply-Demand Gap{% endif %}</span>
+                            <span class="stat-value">309</span>
+                            <span class="stat-change negative">-4.2%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>{% if lang == 'ar' %}توزيع المنتجات{% else %}Product Distribution{% endif %}</h3>
+                    <div class="product-chart">
+                        <div class="chart-item">
+                            <span class="chart-label">{% if lang == 'ar' %}المعدات الثقيلة{% else %}Heavy Equipment{% endif %}</span>
+                            <div class="chart-bar">
+                                <div class="bar-fill" style="width: 65%;">65%</div>
+                            </div>
+                        </div>
+                        <div class="chart-item">
+                            <span class="chart-label">{% if lang == 'ar' %}مواد البناء{% else %}Construction Materials{% endif %}</span>
+                            <div class="chart-bar">
+                                <div class="bar-fill" style="width: 45%;">45%</div>
+                            </div>
+                        </div>
+                        <div class="chart-item">
+                            <span class="chart-label">{% if lang == 'ar' %}معدات الأمان{% else %}Safety Equipment{% endif %}</span>
+                            <div class="chart-bar">
+                                <div class="bar-fill" style="width: 30%;">30%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>{% if lang == 'ar' %}اتجاهات السوق{% else %}Market Trends{% endif %}</h3>
+                    <div class="trend-chart">
+                        <div class="trend-line">
+                            <div class="trend-point" style="left: 10%; bottom: 20%;"></div>
+                            <div class="trend-point" style="left: 25%; bottom: 35%;"></div>
+                            <div class="trend-point" style="left: 40%; bottom: 45%;"></div>
+                            <div class="trend-point" style="left: 55%; bottom: 60%;"></div>
+                            <div class="trend-point" style="left: 70%; bottom: 55%;"></div>
+                            <div class="trend-point" style="left: 85%; bottom: 70%;"></div>
+                        </div>
+                        <div class="trend-labels">
+                            <span>{% if lang == 'ar' %}يناير{% else %}Jan{% endif %}</span>
+                            <span>{% if lang == 'ar' %}مارس{% else %}Mar{% endif %}</span>
+                            <span>{% if lang == 'ar' %}مايو{% else %}May{% endif %}</span>
+                            <span>{% if lang == 'ar' %}يوليو{% else %}Jul{% endif %}</span>
+                            <span>{% if lang == 'ar' %}سبتمبر{% else %}Sep{% endif %}</span>
+                            <span>{% if lang == 'ar' %}نوفمبر{% else %}Nov{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports & Ads Download Section -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h2>{{ t.download_reports }}</h2>
+            </div>
+            
+            <div class="reports-grid">
+                <div class="report-card">
+                    <div class="report-icon">📊</div>
+                    <h3>{% if lang == 'ar' %}تقرير تحليل السوق الشهري{% else %}Monthly Market Analysis Report{% endif %}</h3>
+                    <p>{% if lang == 'ar' %}تحليل شامل لاتجاهات السوق والمنافسين{% else %}Comprehensive analysis of market trends and competitors{% endif %}</p>
+                    <button class="btn btn-primary" onclick="downloadReport('monthly-analysis')">
+                        {% if lang == 'ar' %}تنزيل PDF{% else %}Download PDF{% endif %}
+                    </button>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">📈</div>
+                    <h3>{% if lang == 'ar' %}تقرير أداء المبيعات{% else %}Sales Performance Report{% endif %}</h3>
+                    <p>{% if lang == 'ar' %}تفاصيل المبيعات والإيرادات حسب المنتج والمنطقة{% else %}Sales and revenue details by product and region{% endif %}</p>
+                    <button class="btn btn-primary" onclick="downloadReport('sales-performance')">
+                        {% if lang == 'ar' %}تنزيل PDF{% else %}Download PDF{% endif %}
+                    </button>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">🎯</div>
+                    <h3>{% if lang == 'ar' %}مواد إعلانية للحملات{% else %}Campaign Advertisement Materials{% endif %}</h3>
+                    <p>{% if lang == 'ar' %}مجموعة من المواد الإعلانية الجاهزة للاستخدام{% else %}Ready-to-use advertising materials collection{% endif %}</p>
+                    <button class="btn btn-secondary" onclick="downloadAds('campaign-materials')">
+                        {% if lang == 'ar' %}تنزيل الحزمة{% else %}Download Package{% endif %}
+                    </button>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">📋</div>
+                    <h3>{% if lang == 'ar' %}تقرير تحليل المنافسين{% else %}Competitor Analysis Report{% endif %}</h3>
+                    <p>{% if lang == 'ar' %}دراسة مفصلة للمنافسين واستراتيجياتهم{% else %}Detailed study of competitors and their strategies{% endif %}</p>
+                    <button class="btn btn-primary" onclick="downloadReport('competitor-analysis')">
+                        {% if lang == 'ar' %}تنزيل PDF{% else %}Download PDF{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaign Analysis Section -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h2>{{ t.campaign_analysis }}</h2>
+            </div>
+            
+            <div class="campaigns-container">
+                <!-- Current Campaigns -->
+                <div class="campaigns-section">
+                    <h3>{% if lang == 'ar' %}الحملات الجارية{% else %}Current Campaigns{% endif %}</h3>
+                    <div class="campaign-list">
+                        <div class="campaign-card active">
+                            <div class="campaign-header">
+                                <h4>{% if lang == 'ar' %}حملة معدات الشتاء{% else %}Winter Equipment Campaign{% endif %}</h4>
+                                <span class="campaign-status active">{% if lang == 'ar' %}نشطة{% else %}Active{% endif %}</span>
+                            </div>
+                            <div class="campaign-metrics">
+                                <div class="metric">
+                                    <span class="metric-label">{% if lang == 'ar' %}الوصول{% else %}Reach{% endif %}</span>
+                                    <span class="metric-value">45,230</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">{% if lang == 'ar' %}التفاعل{% else %}Engagement{% endif %}</span>
+                                    <span class="metric-value">12.5%</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">{% if lang == 'ar' %}التحويلات{% else %}Conversions{% endif %}</span>
+                                    <span class="metric-value">234</span>
+                                </div>
+                            </div>
+                            <div class="campaign-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 68%;"></div>
+                                </div>
+                                <span class="progress-text">68% {% if lang == 'ar' %}مكتملة{% else %}Complete{% endif %}</span>
+                            </div>
+                        </div>
+
+                        <div class="campaign-card active">
+                            <div class="campaign-header">
+                                <h4>{% if lang == 'ar' %}حملة الخرسانة الجاهزة{% else %}Ready-Mix Concrete Campaign{% endif %}</h4>
+                                <span class="campaign-status active">{% if lang == 'ar' %}نشطة{% else %}Active{% endif %}</span>
+                            </div>
+                            <div class="campaign-metrics">
+                                <div class="metric">
+                                    <span class="metric-label">{% if lang == 'ar' %}الوصول{% else %}Reach{% endif %}</span>
+                                    <span class="metric-value">32,180</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">{% if lang == 'ar' %}التفاعل{% else %}Engagement{% endif %}</span>
+                                    <span class="metric-value">8.7%</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">{% if lang == 'ar' %}التحويلات{% else %}Conversions{% endif %}</span>
+                                    <span class="metric-value">156</span>
+                                </div>
+                            </div>
+                            <div class="campaign-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 45%;"></div>
+                                </div>
+                                <span class="progress-text">45% {% if lang == 'ar' %}مكتملة{% else %}Complete{% endif %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Previous Campaigns -->
+                <div class="campaigns-section">
+                    <h3>{% if lang == 'ar' %}الحملات السابقة{% else %}Previous Campaigns{% endif %}</h3>
+                    <div class="campaign-list">
+                        <div class="campaign-card completed">
+                            <div class="campaign-header">
+                                <h4>{% if lang == 'ar' %}حملة العروض الصيفية{% else %}Summer Deals Campaign{% endif %}</h4>
+                                <span class="campaign-status completed">{% if lang == 'ar' %}مكتملة{% else %}Completed{% endif %}</span>
+                            </div>
+                            <div class="campaign-results">
+                                <div class="result-item">
+                                    <span class="result-label">{% if lang == 'ar' %}إجمالي الوصول{% else %}Total Reach{% endif %}</span>
+                                    <span class="result-value">78,450</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">{% if lang == 'ar' %}معدل التحويل{% else %}Conversion Rate{% endif %}</span>
+                                    <span class="result-value">15.2%</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">{% if lang == 'ar' %}العائد على الاستثمار{% else %}ROI{% endif %}</span>
+                                    <span class="result-value positive">+245%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="campaign-card completed">
+                            <div class="campaign-header">
+                                <h4>{% if lang == 'ar' %}حملة إطلاق المنتج الجديد{% else %}New Product Launch Campaign{% endif %}</h4>
+                                <span class="campaign-status completed">{% if lang == 'ar' %}مكتملة{% else %}Completed{% endif %}</span>
+                            </div>
+                            <div class="campaign-results">
+                                <div class="result-item">
+                                    <span class="result-label">{% if lang == 'ar' %}إجمالي الوصول{% else %}Total Reach{% endif %}</span>
+                                    <span class="result-value">52,300</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">{% if lang == 'ar' %}معدل التحويل{% else %}Conversion Rate{% endif %}</span>
+                                    <span class="result-value">11.8%</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">{% if lang == 'ar' %}العائد على الاستثمار{% else %}ROI{% endif %}</span>
+                                    <span class="result-value positive">+180%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function downloadReport(reportType) {
+            // Simulate report download
+            const reportNames = {
+                'supply-demand': 'Supply_Demand_Analysis_2024.pdf',
+                'monthly-analysis': 'Monthly_Market_Analysis_Dec2024.pdf',
+                'sales-performance': 'Sales_Performance_Report_Q4.pdf',
+                'competitor-analysis': 'Competitor_Analysis_Report.pdf'
+            };
+            
+            const fileName = reportNames[reportType] || 'Report.pdf';
+            alert(`{% if lang == 'ar' %}جاري تنزيل: ${fileName}{% else %}Downloading: ${fileName}{% endif %}`);
+        }
+        
+        function downloadAds(packageType) {
+            alert(`{% if lang == 'ar' %}جاري تنزيل حزمة المواد الإعلانية...{% else %}Downloading advertising materials package...{% endif %}`);
+        }
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+        
+        // Load dark mode preference
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+        });
+    </script>
+</body>
+</html>

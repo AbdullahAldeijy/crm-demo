@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2B Purchase Order Contract - {{ contract.id }}</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .contract-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .contract-header {
+            text-align: center;
+            border-bottom: 3px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .contract-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .parties {
+            margin-bottom: 30px;
+        }
+        .party-info {
+            margin-bottom: 15px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .items-table th,
+        .items-table td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        .items-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .total-amount {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #333;
+        }
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #ccc;
+        }
+        .signature-block {
+            width: 45%;
+            text-align: center;
+        }
+        .signature-line {
+            border-bottom: 2px solid #333;
+            margin-bottom: 10px;
+            height: 40px;
+        }
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        @media print {
+            body { background: white; }
+            .print-btn { display: none; }
+            .contract-container { box-shadow: none; margin: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">Print Contract</button>
+    
+    <div class="contract-container">
+        <div class="contract-header">
+            <div class="contract-title">B2B PURCHASE ORDER CONTRACT</div>
+            <p>Contract ID: {{ contract.id }}</p>
+        </div>
+
+        <div class="parties">
+            <p>This Purchase Order Contract ("Contract") is made and entered into as of {{ contract.date }}, by and between:</p>
+            
+            <div class="party-info">
+                <strong>Buyer:</strong> {{ contract.buyer }}, having its principal place of business at Riyadh, Saudi Arabia
+            </div>
+            
+            <div class="party-info">
+                <strong>Seller:</strong> {{ contract.seller }}, having its principal place of business at Riyadh, Saudi Arabia
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>1. Purpose</h3>
+            <p>The Buyer agrees to purchase from the Seller, and the Seller agrees to sell to the Buyer, the goods or services described in the purchase order(s) attached hereto or referenced herein ("Products").</p>
+        </div>
+
+        <div class="section">
+            <h3>2. Description of Goods/Services</h3>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Item No.</th>
+                        <th>Description</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>{{ contract.product }}</td>
+                        <td>{{ contract.quantity }}</td>
+                        <td>${{ "%.2f"|format(contract.amount / contract.quantity) }}</td>
+                        <td>${{ "%.2f"|format(contract.amount) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="total-amount">
+                Total Contract Value: ${{ "%.2f"|format(contract.amount) }}
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>3. Payment Terms</h3>
+            <p>Payment shall be made via {{ contract.payment_method }}. Late payments may incur interest at 2% per month.</p>
+        </div>
+
+        <div class="section">
+            <h3>4. Delivery and Acceptance</h3>
+            <p>The Seller shall deliver the Products to the Buyer's designated location by the agreed delivery date. Ownership and risk of loss transfer upon delivery. The Buyer shall inspect the Products within 7 days of delivery and notify the Seller of any defects.</p>
+        </div>
+
+        <div class="section">
+            <h3>5. Warranties</h3>
+            <p>The Seller warrants that all Products are new, free from defects, and conform to the specifications stated in this Contract. This warranty shall remain valid for 12 months from the date of delivery.</p>
+        </div>
+
+        <div class="section">
+            <h3>6. Confidentiality</h3>
+            <p>Both parties agree to maintain confidentiality of all non-public information shared in connection with this Contract.</p>
+        </div>
+
+        <div class="section">
+            <h3>7. Termination</h3>
+            <p>Either party may terminate this Contract upon 30 days' written notice in the event of a material breach not cured within 15 days.</p>
+        </div>
+
+        <div class="section">
+            <h3>8. Force Majeure</h3>
+            <p>Neither party shall be liable for failure to perform due to causes beyond reasonable control, including but not limited to acts of God, war, or government restrictions.</p>
+        </div>
+
+        <div class="section">
+            <h3>9. Governing Law and Jurisdiction</h3>
+            <p>This Contract shall be governed by and construed in accordance with the laws of Saudi Arabia. Any dispute shall be resolved in the courts of Riyadh, Saudi Arabia.</p>
+        </div>
+
+        <div class="section">
+            <h3>10. Entire Agreement</h3>
+            <p>This Contract constitutes the entire agreement between the parties and supersedes all prior discussions or understandings.</p>
+        </div>
+
+        <p style="margin-top: 30px;"><strong>IN WITNESS WHEREOF</strong>, the parties have executed this Contract as of the date first written above.</p>
+
+        <div class="signatures">
+            <div class="signature-block">
+                <strong>Buyer</strong>
+                <div class="signature-line"></div>
+                <p>Name: [Authorized Representative]</p>
+                <p>Title: [Title]</p>
+                <p>Date: {{ contract.date }}</p>
+            </div>
+            <div class="signature-block">
+                <strong>Seller</strong>
+                <div class="signature-line"></div>
+                <p>Name: [Authorized Representative]</p>
+                <p>Title: [Title]</p>
+                <p>Date: {{ contract.date }}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

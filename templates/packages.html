@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t.site_name }} - {{ t.packages }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="{% if lang == 'ar' %}rtl{% endif %}">
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo"><a href="{{ url_for('index') }}">{{ t.site_name }}</a> - {{ company.name }}</h1>
+            <div class="nav-info">
+                <div class="nav-buttons">
+                    <a href="{{ url_for('crm_dashboard') }}" class="btn btn-info">{{ t.crm_dashboard }}</a>
+                    <div class="nav-controls">
+                        <button onclick="toggleDarkMode()" class="btn btn-dark-toggle" title="Toggle Dark Mode">
+                            <span class="dark-icon">🌙</span>
+                            <span class="light-icon">☀️</span>
+                        </button>
+                        <div class="language-switcher">
+                            <a href="{{ url_for('packages', lang='en') }}" class="lang-btn {% if lang == 'en' %}active{% endif %}">EN</a>
+                            <a href="{{ url_for('packages', lang='ar') }}" class="lang-btn {% if lang == 'ar' %}active{% endif %}">عربي</a>
+                        </div>
+                    </div>
+                </div>
+                <span class="user-info">
+                    {% if session.user_type == 'employee' %}
+                        {{ company.employees[session.employee_id].name }} ({{ session.role|title }})
+                    {% else %}
+                        {{ t.company_admin }}
+                    {% endif %}
+                </span>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary">{{ t.logout }}</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="packages-container">
+        <div class="packages-header">
+            <h1>{{ t.packages }}</h1>
+            <p>{% if lang == 'ar' %}اختر الباقة المناسبة لشركتك لزيادة الظهور في المنصة{% else %}Choose the right package for your company to increase visibility on the platform{% endif %}</p>
+        </div>
+
+        <div class="packages-grid">
+            <!-- Package 1 -->
+            <div class="package-card">
+                <div class="package-header">
+                    <h2>{{ t.package_1 }}</h2>
+                    <div class="package-price">
+                        <span class="price">100</span>
+                        <span class="currency">{{ t.sar }}</span>
+                    </div>
+                </div>
+                <div class="package-features">
+                    <p class="package-description">{{ t.package_1_desc }}</p>
+                    <ul class="features-list">
+                        <li>{% if lang == 'ar' %}الظهور الأول لمدة يوم واحد{% else %}First appearance for 1 day{% endif %}</li>
+                        <li>{% if lang == 'ar' %}صورة إعلانية في الواجهة{% else %}Advertising image in interface{% endif %}</li>
+                        <li>{% if lang == 'ar' %}أولوية في نتائج البحث{% else %}Priority in search results{% endif %}</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary package-btn" onclick="purchasePackage(1, 100)">{{ t.purchase_package }}</button>
+            </div>
+
+            <!-- Package 2 -->
+            <div class="package-card featured">
+                <div class="package-header">
+                    <h2>{{ t.package_2 }}</h2>
+                    <div class="package-price">
+                        <span class="price">1,000</span>
+                        <span class="currency">{{ t.sar }}</span>
+                    </div>
+                    <div class="popular-badge">{% if lang == 'ar' %}الأكثر شعبية{% else %}Most Popular{% endif %}</div>
+                </div>
+                <div class="package-features">
+                    <p class="package-description">{{ t.package_2_desc }}</p>
+                    <ul class="features-list">
+                        <li>{% if lang == 'ar' %}الظهور الأول لمدة أسبوع{% else %}First appearance for 1 week{% endif %}</li>
+                        <li>{% if lang == 'ar' %}منتجين مميزين{% else %}2 featured products{% endif %}</li>
+                        <li>{% if lang == 'ar' %}صورة إعلانية في الواجهة{% else %}Advertising image in interface{% endif %}</li>
+                        <li>{% if lang == 'ar' %}أولوية عالية في البحث{% else %}High priority in search{% endif %}</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary package-btn" onclick="purchasePackage(2, 1000)">{{ t.purchase_package }}</button>
+            </div>
+
+            <!-- Package 3 -->
+            <div class="package-card premium">
+                <div class="package-header">
+                    <h2>{{ t.package_3 }}</h2>
+                    <div class="package-price">
+                        <span class="price">10,000</span>
+                        <span class="currency">{{ t.sar }}</span>
+                    </div>
+                    <div class="premium-badge">{% if lang == 'ar' %}بريميوم{% else %}Premium{% endif %}</div>
+                </div>
+                <div class="package-features">
+                    <p class="package-description">{{ t.package_3_desc }}</p>
+                    <ul class="features-list">
+                        <li>{% if lang == 'ar' %}الظهور الأول لمدة شهر كامل{% else %}First appearance for 1 full month{% endif %}</li>
+                        <li>{% if lang == 'ar' %}منتجين مميزين{% else %}2 featured products{% endif %}</li>
+                        <li>{% if lang == 'ar' %}صورة إعلانية كبيرة{% else %}Large advertising image{% endif %}</li>
+                        <li>{% if lang == 'ar' %}أولوية قصوى في البحث{% else %}Maximum priority in search{% endif %}</li>
+                        <li>{% if lang == 'ar' %}تقارير تحليلية مفصلة{% else %}Detailed analytics reports{% endif %}</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary package-btn" onclick="purchasePackage(3, 10000)">{{ t.purchase_package }}</button>
+            </div>
+        </div>
+
+        <div class="packages-info">
+            <h3>{% if lang == 'ar' %}معلومات إضافية{% else %}Additional Information{% endif %}</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>{% if lang == 'ar' %}كيف تعمل الباقات؟{% else %}How do packages work?{% endif %}</h4>
+                    <p>{% if lang == 'ar' %}تضمن الباقات ظهور شركتك في المقدمة وزيادة فرص الوصول للعملاء المحتملين{% else %}Packages ensure your company appears first and increases opportunities to reach potential customers{% endif %}</p>
+                </div>
+                <div class="info-card">
+                    <h4>{% if lang == 'ar' %}الدفع والتفعيل{% else %}Payment & Activation{% endif %}</h4>
+                    <p>{% if lang == 'ar' %}يتم تفعيل الباقة فور الدفع وتبدأ المدة من لحظة التفعيل{% else %}Package is activated immediately after payment and duration starts from activation moment{% endif %}</p>
+                </div>
+                <div class="info-card">
+                    <h4>{% if lang == 'ar' %}الدعم الفني{% else %}Technical Support{% endif %}</h4>
+                    <p>{% if lang == 'ar' %}فريق الدعم متاح 24/7 لمساعدتك في أي استفسار{% else %}Support team is available 24/7 to help with any inquiries{% endif %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function purchasePackage(packageId, price) {
+            const packageNames = {
+                1: '{{ t.package_1 }}',
+                2: '{{ t.package_2 }}',
+                3: '{{ t.package_3 }}'
+            };
+            
+            const confirmMessage = `{% if lang == 'ar' %}هل تريد شراء ${packageNames[packageId]} بسعر ${price} ريال؟{% else %}Do you want to purchase ${packageNames[packageId]} for ${price} SAR?{% endif %}`;
+            
+            if (confirm(confirmMessage)) {
+                // Simulate purchase process
+                alert(`{% if lang == 'ar' %}تم شراء الباقة بنجاح! سيتم تفعيلها خلال دقائق.{% else %}Package purchased successfully! It will be activated within minutes.{% endif %}`);
+                
+                // Here you would typically send a request to the server
+                // fetch('/api/purchase_package', { ... })
+            }
+        }
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+        
+        // Load dark mode preference
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+        });
+    </script>
+</body>
+</html>

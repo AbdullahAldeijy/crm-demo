@@ -9,12 +9,28 @@
 <body>
     <nav class="navbar">
         <div class="nav-container">
-            <h1 class="nav-logo">{{ t.site_name }}</h1>
+            <h1 class="nav-logo"><a href="{{ url_for('index') }}">{{ t.site_name }}</a></h1>
             <div class="nav-links">
-                <button onclick="switchLanguage('{{ 'ar' if lang == 'en' else 'en' }}')" class="btn btn-lang">
-                    {{ 'العربية' if lang == 'en' else 'English' }}
-                </button>
-                <a href="{{ url_for('login') }}" class="btn btn-primary">{{ t.login }}</a>
+                <div class="nav-controls">
+                    <button onclick="showSystemAnnouncements()" class="btn btn-notification" title="System Announcements">
+                        📢
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button onclick="toggleDarkMode()" class="btn btn-dark-toggle" title="Toggle Dark Mode">
+                        <span class="dark-icon">🌙</span>
+                        <span class="light-icon">☀️</span>
+                    </button>
+                    <div class="language-switcher">
+                        <a href="{{ url_for('index', lang='en') }}" class="lang-btn {{ 'active' if lang == 'en' else '' }}">EN</a>
+                        <a href="{{ url_for('index', lang='ar') }}" class="lang-btn {{ 'active' if lang == 'ar' else '' }}">عربي</a>
+                    </div>
+                </div>
+                {% if session.company_id %}
+                    <a href="{{ url_for('crm_dashboard') }}" class="btn btn-info">{{ t.crm_dashboard }}</a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-secondary">{{ t.logout }}</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-primary">{{ t.login }}</a>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -31,10 +47,10 @@
             <h2>{{ t.partners }}</h2>
             <div class="companies-grid">
                 {% for company_id, company in companies.items() %}
-                <div class="company-card">
+                <div class="company-card" onclick="window.location.href='{{ url_for('company_page', company_id=company_id) }}'" style="cursor: pointer;">
                     <h3>{{ company.name }}</h3>
                     <p class="company-industry">{{ company.industry }}</p>
-                    <p class="product-count">{{ products[company_id]|length if products[company_id] else 0 }} Products Available</p>
+                    <p class="product-count">{{ (products|selectattr('company_id', 'equalto', company_id)|list)|length }} Products Available</p>
                 </div>
                 {% endfor %}
             </div>
@@ -59,13 +75,32 @@
                                 <label for="qty-{{ product.id }}">{{ t.quantity }}:</label>
                                 <input type="number" id="qty-{{ product.id }}" min="1" max="{{ product.quantity }}" value="1" class="quantity-input">
                             </div>
+                            <div class="delivery-date-selector">
+                                <label for="delivery-date-{{ product.id }}">{% if lang == 'ar' %}وقت الاستلام{% else %}Delivery Date{% endif %}:</label>
+                                <input type="date" id="delivery-date-{{ product.id }}" class="delivery-date-input">
+                            </div>
                             <div class="action-buttons">
-                                <button class="btn btn-secondary" onclick="openChat('{{ product.company_id }}', '{{ product.title }}')">
-                                    {{ t.contact_seller }}
-                                </button>
-                                <button class="btn btn-primary" onclick="buyNow('{{ product.company_id }}', {{ product.id }}, '{{ product.title }}', {{ product.price }})">
-                                    {{ t.buy_now }}
-                                </button>
+                                {% if session.company_id %}
+                                    {% if session.company_id == 'fastlogistics' %}
+                                        <button class="btn btn-info" onclick="openAssignServiceWindow('{{ product.company_id }}', '{{ product.id }}', '{{ product.title }}', {{ product.price }})">
+                                            {% if lang == 'ar' %}تعيين خدمة{% else %}Assign Service{% endif %}
+                                        </button>
+                                    {% else %}
+                                        <button class="btn btn-secondary" onclick="openChatWindow('{{ product.company_id }}', '{{ product.id }}', '{{ product.title }}', '{{ product.company }}')">
+                                            {{ t.contact_seller }}
+                                        </button>
+                                        <button class="btn btn-primary" onclick="openPaymentWindow('{{ product.company_id }}', '{{ product.id }}', '{{ product.title }}', {{ product.price }})">
+                                            {{ t.buy_now }}
+                                        </button>
+                                    {% endif %}
+                                {% else %}
+                                    <button class="btn btn-secondary" onclick="alert('Login required')">
+                                        {{ t.contact_seller }}
+                                    </button>
+                                    <button class="btn btn-primary" onclick="alert('Login required')">
+                                        {{ t.buy_now }}
+                                    </button>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -81,175 +116,260 @@
         </div>
     </footer>
 
+    <script src="{{ url_for('static', filename='chat.js') }}"></script>
+    <script src="{{ url_for('static', filename='payment.js') }}"></script>
+    <script src="{{ url_for('static', filename='assign-service.js') }}"></script>
     <script>
         function buyNow(companyId, productId, productTitle, price) {
-            const quantityInput = document.getElementById(`qty-${productId}`);
-            const quantity = parseInt(quantityInput.value);
+            var quantity = 1;
+            var quantityInput = document.getElementById('qty-' + productId);
+            if (quantityInput) {
+                quantity = parseInt(quantityInput.value) || 1;
+            }
+            var total = (price * quantity).toFixed(2);
+            alert('Buying ' + quantity + ' x ' + productTitle + ' for $' + total);
+        }
+        
+        function showTorbionePayment(companyId, productId, productTitle, quantity, unitPrice, totalPrice) {
+            var modal = document.createElement('div');
+            modal.className = 'torbiona-modal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
             
-            if (quantity && quantity > 0) {
-                const totalPrice = (parseFloat(price) * quantity).toFixed(2);
-                
-                // Show Torbiona payment modal
-                showTorbionePayment({
+            modal.innerHTML = '<div class="torbiona-modal-content enhanced">' +
+                '<div class="torbiona-header">' +
+                '<h2>🔒 Secure Payment with Torbiona</h2>' +
+                '<p>Complete your purchase securely</p>' +
+                '<span class="close" onclick="closeTorbioneModal()">&times;</span>' +
+                '</div>' +
+                '<div class="torbiona-body">' +
+                '<div class="order-summary-enhanced">' +
+                '<div class="section-title">📦 Order Summary</div>' +
+                '<div class="product-item">' +
+                '<div class="product-name">' + productTitle + '</div>' +
+                '<div class="product-calc">Qty: ' + quantity + ' × $' + unitPrice + '</div>' +
+                '<div class="product-total">Product Total: <span class="price">$' + totalPrice + '</span></div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="delivery-section-enhanced">' +
+                '<div class="section-title">🚚 Delivery Options</div>' +
+                '<div class="delivery-grid">' +
+                '<div class="delivery-card" onclick="selectDeliveryCard(this, \'fast_50\', ' + totalPrice + ')">' +
+                '<input type="radio" name="delivery" value="fast_50" style="display:none;">' +
+                '<div class="delivery-header">⚡ Fast Delivery</div>' +
+                '<div class="delivery-company">فاست لوجيستك</div>' +
+                '<div class="delivery-time">Same Day</div>' +
+                '<div class="delivery-price">50 SAR</div>' +
+                '</div>' +
+                '<div class="delivery-card" onclick="selectDeliveryCard(this, \'standard_25\', ' + totalPrice + ')">' +
+                '<input type="radio" name="delivery" value="standard_25" style="display:none;">' +
+                '<div class="delivery-header">📦 Standard</div>' +
+                '<div class="delivery-company">فاست لوجيستك</div>' +
+                '<div class="delivery-time">2-3 Days</div>' +
+                '<div class="delivery-price">25 SAR</div>' +
+                '</div>' +
+                '<div class="delivery-card selected" onclick="selectDeliveryCard(this, \'none_0\', ' + totalPrice + ')">' +
+                '<input type="radio" name="delivery" value="none_0" checked style="display:none;">' +
+                '<div class="delivery-header">🏪 Pickup</div>' +
+                '<div class="delivery-company">Self Pickup</div>' +
+                '<div class="delivery-time">No Delivery</div>' +
+                '<div class="delivery-price">Free</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="payment-section-enhanced">' +
+                '<div class="section-title">💳 Payment Method</div>' +
+                '<div class="payment-grid">' +
+                '<div class="payment-card selected" onclick="selectPaymentCard(this, \'torbiona\')">' +
+                '<input type="radio" name="payment" value="torbiona" checked style="display:none;">' +
+                '<div class="payment-icon">🔒</div>' +
+                '<div class="payment-name">Torbiona</div>' +
+                '<div class="payment-desc">Secure financing</div>' +
+                '</div>' +
+                '<div class="payment-card" onclick="selectPaymentCard(this, \'pay-now\')">' +
+                '<input type="radio" name="payment" value="pay-now" style="display:none;">' +
+                '<div class="payment-icon">💳</div>' +
+                '<div class="payment-name">Pay Now</div>' +
+                '<div class="payment-desc">Instant payment</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="total-section">' +
+                '<div class="total-breakdown">' +
+                '<div class="total-line"><span>Product Total:</span><span>$' + totalPrice + '</span></div>' +
+                '<div class="total-line"><span>Delivery Fee:</span><span id="deliveryFeeDisplay">Free</span></div>' +
+                '<div class="total-line final"><span>Final Total:</span><span id="finalTotal">$' + totalPrice + '</span></div>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="torbiona-footer">' +
+                '<button class="complete-btn" onclick="processTorbionePayment(' + "'" + companyId + "','" + productId + "','" + productTitle + "','" + quantity + "','" + totalPrice + "')">' +
+                '<span class="btn-icon">🔐</span>' +
+                '<span class="btn-text">Complete Purchase</span>' +
+                '</button>' +
+                '</div>' +
+                '</div>';
+            
+            document.body.appendChild(modal);
+        }
+        
+        function selectDeliveryCard(card, value, basePrice) {
+            // Remove selected class from all delivery cards
+            document.querySelectorAll('.delivery-card').forEach(c => c.classList.remove('selected'));
+            // Add selected class to clicked card
+            card.classList.add('selected');
+            // Check the radio button
+            card.querySelector('input[type="radio"]').checked = true;
+            
+            // Update total
+            var deliveryFee = parseInt(value.split('_')[1]);
+            var finalTotal = (parseFloat(basePrice) + deliveryFee).toFixed(2);
+            document.getElementById('finalTotal').textContent = '$' + finalTotal;
+            document.getElementById('deliveryFeeDisplay').textContent = deliveryFee === 0 ? 'Free' : deliveryFee + ' SAR';
+        }
+        
+        function selectPaymentCard(card, value) {
+            // Remove selected class from all payment cards
+            document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('selected'));
+            // Add selected class to clicked card
+            card.classList.add('selected');
+            // Check the radio button
+            card.querySelector('input[type="radio"]').checked = true;
+        }
+        
+        function closeTorbioneModal() {
+            var modal = document.querySelector('.torbiona-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function processTorbionePayment(companyId, productId, productTitle, quantity, totalPrice) {
+            var paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+            var deliveryOption = document.querySelector('input[name="delivery"]:checked');
+            var deliveryFee = deliveryOption ? parseInt(deliveryOption.value.split('_')[1]) : 0;
+            var finalTotal = (parseFloat(totalPrice) + deliveryFee).toFixed(2);
+            
+            if (paymentMethod === 'torbiona') {
+                closeTorbioneModal();
+                var orderData = JSON.stringify({
                     companyId: companyId,
                     productId: productId,
                     productTitle: productTitle,
                     quantity: quantity,
-                    unitPrice: price,
-                    totalPrice: totalPrice
+                    totalPrice: finalTotal,
+                    deliveryFee: deliveryFee
                 });
+                window.location.href = '/torbiona-calculator?order=' + encodeURIComponent(orderData);
             } else {
-                alert('Please select a valid quantity.');
-            }
-        }
-        
-        function showTorbionePayment(orderData) {
-            const modal = document.createElement('div');
-            modal.className = 'torbiona-modal';
-            modal.innerHTML = `
-                <div class="torbiona-modal-content">
-                    <span class="close" onclick="closeTorbioneModal()">&times;</span>
-                    <div class="torbiona-header">
-                        <h2>🔒 Secure Payment with Torbiona</h2>
-                        <p>Complete your purchase securely</p>
-                    </div>
-                    
-                    <div class="order-summary">
-                        <h3>Order Summary</h3>
-                        <div class="order-item">
-                            <span class="item-name">${orderData.productTitle}</span>
-                            <span class="item-details">Qty: ${orderData.quantity} × $${orderData.unitPrice}</span>
-                            <span class="item-total">$${orderData.totalPrice}</span>
-                        </div>
-                        <div class="order-total">
-                            <strong>Total: $${orderData.totalPrice}</strong>
-                        </div>
-                    </div>
-                    
-                    <div class="torbiona-payment">
-                        <h3>Payment Method</h3>
-                        <div class="payment-options">
-                            <label class="payment-option">
-                                <input type="radio" name="payment" value="torbiona" checked>
-                                <span class="payment-icon">🔒</span>
-                                <span>Torbiona</span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="payment" value="pay-now">
-                                <span class="payment-icon">💳</span>
-                                <span>Pay Now</span>
-                            </label>
-                        </div>
-                        
-                        <div class="torbiona-security">
-                            <p>🛡️ Protected by Torbiona's advanced security</p>
-                            <p>✅ 256-bit SSL encryption</p>
-                            <p>🔐 Two-factor authentication</p>
-                        </div>
-                        
-                        <button class="btn btn-primary btn-full" onclick="processTorbionePayment(${JSON.stringify(orderData).replace(/"/g, '&quot;')})">
-                            Complete Purchase with Torbiona
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            modal.style.display = 'block';
-        }
-        
-        function closeTorbioneModal() {
-            const modal = document.querySelector('.torbiona-modal');
-            if (modal) {
-                modal.remove();
-            }
-        }
-        
-        function processTorbionePayment(orderData) {
-            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-            
-            if (paymentMethod === 'torbiona') {
-                // Redirect to Torbiona calculator
-                closeTorbioneModal();
-                window.location.href = `/torbiona-calculator?order=${encodeURIComponent(JSON.stringify(orderData))}`;
-            } else {
-                // Process Pay Now immediately
-                const button = event.target;
-                button.innerHTML = '🔄 Processing Payment...';
-                button.disabled = true;
-                
-                setTimeout(() => {
-                    fetch('/api/purchase', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            company_id: orderData.companyId,
-                            product_id: orderData.productId,
-                            quantity: orderData.quantity,
-                            payment_method: 'pay-now',
-                            total_amount: orderData.totalPrice
-                        })
+                fetch('/api/purchase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        company_id: companyId,
+                        product_id: parseInt(productId),
+                        quantity: parseInt(quantity),
+                        payment_method: 'pay-now',
+                        total_amount: finalTotal,
+                        delivery_fee: deliveryFee
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        closeTorbioneModal();
-                        if (data.success) {
-                            showSuccessModal(orderData, 'pay-now');
-                            location.reload();
-                        } else {
-                            alert('Payment failed: ' + data.message);
-                        }
-                    });
-                }, 1500);
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    closeTorbioneModal();
+                    if (data.success) {
+                        alert('Payment successful! Order ID: ' + data.order_id);
+                        location.reload();
+                    } else {
+                        alert('Payment failed: ' + data.message);
+                    }
+                })
+                .catch(function(error) {
+                    alert('Error processing payment');
+                });
             }
         }
         
-        function showSuccessModal(orderData, paymentMethod) {
-            const modal = document.createElement('div');
-            modal.className = 'success-modal';
-            modal.innerHTML = `
-                <div class="success-modal-content">
-                    <div class="success-header">
-                        <div class="success-icon">✅</div>
-                        <h2>Payment Successful!</h2>
-                        <p>Your order has been confirmed</p>
-                    </div>
-                    
-                    <div class="success-details">
-                        <h3>Order Confirmation</h3>
-                        <p><strong>Product:</strong> ${orderData.productTitle}</p>
-                        <p><strong>Quantity:</strong> ${orderData.quantity}</p>
-                        <p><strong>Total Paid:</strong> $${orderData.totalPrice}</p>
-                        <p><strong>Payment Method:</strong> ${paymentMethod.replace('-', ' ').toUpperCase()}</p>
-                        <p><strong>Transaction ID:</strong> TRB-${Date.now()}</p>
-                    </div>
-                    
-                    <div class="success-actions">
-                        <button class="btn btn-primary" onclick="closeSuccessModal()">
-                            Continue Shopping
-                        </button>
-                    </div>
-                </div>
-            `;
+        function redirectToMainPayment(companyId, productId, productTitle, unitPrice) {
+            var quantity = parseInt(document.getElementById('qty-' + productId).value) || 1;
+            var deliveryDate = document.getElementById('delivery-date-' + productId).value || '';
             
-            document.body.appendChild(modal);
-            modal.style.display = 'block';
+            var orderData = {
+                companyId: companyId,
+                productId: productId,
+                productTitle: productTitle,
+                quantity: quantity,
+                unitPrice: unitPrice,
+                totalPrice: (unitPrice * quantity).toFixed(2),
+                deliveryDate: deliveryDate
+            };
+            
+            var encodedOrder = encodeURIComponent(JSON.stringify(orderData));
+            window.location.href = '/torbiona_calculator?order=' + encodedOrder;
         }
         
-        function closeSuccessModal() {
-            const modal = document.querySelector('.success-modal');
-            if (modal) {
-                modal.remove();
-            }
+        function openBuy(companyId, productId, unitPrice) {
+            var qty = document.getElementById('qty-' + productId).value;
+            var totalPrice = (qty * unitPrice).toFixed(2);
+            showTorbionePayment(companyId, productId, 'Product', qty, unitPrice, totalPrice);
         }
+        
 
-        function openChat(companyId, productTitle) {
-            window.open(`/chat/${companyId}/${encodeURIComponent(productTitle)}`, '_blank', 'width=400,height=600');
+        
+
+        
+        function requireLogin(action) {
+            alert('Please login to ' + action + ' products.');
+            window.location.href = '/login';
         }
         
         function switchLanguage(lang) {
-            window.location.href = `/${lang}`;
+            window.location.href = '/' + lang;
         }
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+        
+        function showSystemAnnouncements() {
+            const modal = document.createElement('div');
+            modal.className = 'custom-modal';
+            modal.innerHTML = `
+                <div class="custom-modal-content">
+                    <div class="custom-modal-header">
+                        <h3>📢 {% if lang == 'ar' %}إعلانات مدير النظام{% else %}System Administrator Announcements{% endif %}</h3>
+                        <span class="custom-modal-close" onclick="closeCustomModal()">&times;</span>
+                    </div>
+                    <div class="custom-modal-body">
+                        <ul style="text-align: left; padding-left: 20px;">
+                            <li>{% if lang == 'ar' %}مرحباً بشركة المباني الجديدة!{% else %}Welcome to new company Al-Mabani!{% endif %}</li>
+                            <li>{% if lang == 'ar' %}صيانة مجدولة يوم الجمعة 2-4 صباحاً{% else %}Scheduled maintenance Friday 2-4 AM{% endif %}</li>
+                        </ul>
+                    </div>
+                    <div class="custom-modal-footer">
+                        <button class="btn btn-primary" onclick="closeCustomModal()">{% if lang == 'ar' %}حسناً{% else %}OK{% endif %}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function closeCustomModal() {
+            const modal = document.querySelector('.custom-modal');
+            if (modal) modal.remove();
+        }
+        
+
+        
+
+        
+
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+        });
     </script>
 </body>
 </html>

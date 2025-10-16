@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if lang == 'ar' %}خطوات التسجيل{% else %}Registration Steps{% endif %} - {{ t.site_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="{% if lang == 'ar' %}rtl{% endif %}">
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo"><a href="{{ url_for('index') }}">{{ t.site_name }}</a> - {{ company.name }}</h1>
+            <div class="nav-info">
+                <span class="user-info">{% if lang == 'ar' %}إعداد الشركة{% else %}Company Setup{% endif %}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary">{{ t.logout }}</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="registration-container">
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">{% if lang == 'ar' %}الأقسام والموظفين{% else %}Departments{% endif %}</div>
+                </div>
+                <div class="progress-step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">{% if lang == 'ar' %}صفحة الشركة{% else %}Company Page{% endif %}</div>
+                </div>
+                <div class="progress-step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">{% if lang == 'ar' %}المنتجات{% else %}Products{% endif %}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Department Management -->
+        <div id="step-1" class="step-content active">
+            <div class="step-header">
+                <h2>{% if lang == 'ar' %}الخطوة 1: إنشاء الهيكل التنظيمي{% else %}Step 1: Create Organizational Structure{% endif %}</h2>
+                <p>{% if lang == 'ar' %}قم بإنشاء الأقسام وإضافة الموظفين لشركتك{% else %}Create departments and add employees for your company{% endif %}</p>
+            </div>
+
+            <div class="departments-container">
+                <!-- C-Level Executives -->
+                <div class="department-section">
+                    <div class="department-header">
+                        <h3>{% if lang == 'ar' %}الإدارة العليا{% else %}Executive Management{% endif %}</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('الإدارة العليا')">{% if lang == 'ar' %}إضافة موظف{% else %}Add Employee{% endif %}</button>
+                    </div>
+                    <div class="employees-grid" id="dept-executive">
+                        <div class="employee-card">
+                            <div class="employee-avatar">CEO</div>
+                            <h4>يوسف البنيان</h4>
+                            <p class="employee-role">{% if lang == 'ar' %}الرئيس التنفيذي{% else %}Chief Executive Officer{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Departments Grid -->
+                <div class="departments-grid">
+                    <!-- Finance Department -->
+                    <div class="department-card">
+                        <div class="department-header">
+                            <h4>{% if lang == 'ar' %}المالية والمحاسبة{% else %}Finance & Accounting{% endif %}</h4>
+                            <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('المالية والمحاسبة')">+</button>
+                        </div>
+                        <div class="department-employees">
+                            <p style="color: #666; font-style: italic;">{% if lang == 'ar' %}لا يوجد موظفون بعد{% else %}No employees yet{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <!-- HR Department -->
+                    <div class="department-card">
+                        <div class="department-header">
+                            <h4>{% if lang == 'ar' %}الموارد البشرية{% else %}Human Resources{% endif %}</h4>
+                            <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('الموارد البشرية')">+</button>
+                        </div>
+                        <div class="department-employees">
+                            <p style="color: #666; font-style: italic;">{% if lang == 'ar' %}لا يوجد موظفون بعد{% else %}No employees yet{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Marketing Department -->
+                    <div class="department-card">
+                        <div class="department-header">
+                            <h4>{% if lang == 'ar' %}التسويق{% else %}Marketing{% endif %}</h4>
+                            <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('التسويق')">+</button>
+                        </div>
+                        <div class="department-employees">
+                            <p style="color: #666; font-style: italic;">{% if lang == 'ar' %}لا يوجد موظفون بعد{% else %}No employees yet{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Sales Department -->
+                    <div class="department-card">
+                        <div class="department-header">
+                            <h4>{% if lang == 'ar' %}المبيعات{% else %}Sales{% endif %}</h4>
+                            <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('المبيعات')">+</button>
+                        </div>
+                        <div class="department-employees">
+                            <p style="color: #666; font-style: italic;">{% if lang == 'ar' %}لا يوجد موظفون بعد{% else %}No employees yet{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Operations Department -->
+                    <div class="department-card">
+                        <div class="department-header">
+                            <h4>{% if lang == 'ar' %}العمليات / الإنتاج{% else %}Operations / Production{% endif %}</h4>
+                            <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('العمليات')">+</button>
+                        </div>
+                        <div class="department-employees">
+                            <p style="color: #666; font-style: italic;">{% if lang == 'ar' %}لا يوجد موظفون بعد{% else %}No employees yet{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Procurement Department -->
+                    <div class="department-card">
+                        <div class="department-header">
+                            <h4>{% if lang == 'ar' %}المشتريات والمخزون{% else %}Procurement & Inventory{% endif %}</h4>
+                            <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('المشتريات')">+</button>
+                        </div>
+                        <div class="department-employees">
+                            <p style="color: #666; font-style: italic;">{% if lang == 'ar' %}لا يوجد موظفون بعد{% else %}No employees yet{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <!-- IT Department -->
+                    <div class="department-card">
+                        <div class="department-header">
+                            <h4>{% if lang == 'ar' %}تكنولوجيا المعلومات{% else %}Information Technology{% endif %}</h4>
+                            <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('تكنولوجيا المعلومات')">+</button>
+                        </div>
+                        <div class="department-employees">
+                            <p style="color: #666; font-style: italic;">{% if lang == 'ar' %}لا يوجد موظفون بعد{% else %}No employees yet{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Customer Service Department -->
+                    <div class="department-card">
+                        <div class="department-header">
+                            <h4>{% if lang == 'ar' %}خدمة العملاء{% else %}Customer Service{% endif %}</h4>
+                            <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('خدمة العملاء')">+</button>
+                        </div>
+                        <div class="department-employees">
+                            <p style="color: #666; font-style: italic;">{% if lang == 'ar' %}لا يوجد موظفون بعد{% else %}No employees yet{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Planning & Development Department -->
+                    <div class="department-card">
+                        <div class="department-header">
+                            <h4>{% if lang == 'ar' %}التخطيط والتطوير{% else %}Planning & Development{% endif %}</h4>
+                            <button class="btn btn-sm btn-secondary" onclick="showAddEmployeeModal('التخطيط')">+</button>
+                        </div>
+                        <div class="department-employees">
+                            <p style="color: #666; font-style: italic;">{% if lang == 'ar' %}لا يوجد موظفون بعد{% else %}No employees yet{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Company Page -->
+        <div id="step-2" class="step-content">
+            <div class="step-header">
+                <h2>{% if lang == 'ar' %}الخطوة 2: إنشاء صفحة الشركة{% else %}Step 2: Create Company Page{% endif %}</h2>
+                <p>{% if lang == 'ar' %}قم بتخصيص صفحة شركتك وإضافة المعلومات والصور{% else %}Customize your company page and add information and images{% endif %}</p>
+            </div>
+
+            <div class="company-page-setup">
+                <div class="setup-section">
+                    <h3>{% if lang == 'ar' %}معلومات الشركة الأساسية{% else %}Basic Company Information{% endif %}</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>{% if lang == 'ar' %}اسم الشركة{% else %}Company Name{% endif %}</label>
+                            <input type="text" value="{{ company.name }}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>{% if lang == 'ar' %}القطاع{% else %}Industry{% endif %}</label>
+                            <input type="text" value="{{ company.industry }}" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <h3>{% if lang == 'ar' %}عن الشركة{% else %}About Company{% endif %}</h3>
+                    <textarea id="aboutCompany" rows="4" placeholder="{% if lang == 'ar' %}اكتب نبذة عن شركتك...{% else %}Write about your company...{% endif %}">{{ company.name }} is a leading company in the {{ company.industry }} sector, committed to delivering excellence and innovation in every project we undertake.</textarea>
+                </div>
+
+                <div class="setup-section">
+                    <h3>{% if lang == 'ar' %}صور الشركة{% else %}Company Images{% endif %}</h3>
+                    <div class="image-upload-grid">
+                        <div class="image-upload-card">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-image"></i>
+                                <p>{% if lang == 'ar' %}شعار الشركة{% else %}Company Logo{% endif %}</p>
+                                <button class="btn btn-sm btn-primary">{% if lang == 'ar' %}رفع صورة{% else %}Upload Image{% endif %}</button>
+                            </div>
+                        </div>
+                        <div class="image-upload-card">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-building"></i>
+                                <p>{% if lang == 'ar' %}صورة المبنى{% else %}Building Image{% endif %}</p>
+                                <button class="btn btn-sm btn-primary">{% if lang == 'ar' %}رفع صورة{% else %}Upload Image{% endif %}</button>
+                            </div>
+                        </div>
+                        <div class="image-upload-card">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-users"></i>
+                                <p>{% if lang == 'ar' %}صورة الفريق{% else %}Team Image{% endif %}</p>
+                                <button class="btn btn-sm btn-primary">{% if lang == 'ar' %}رفع صورة{% else %}Upload Image{% endif %}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <h3>{% if lang == 'ar' %}معلومات الاتصال{% else %}Contact Information{% endif %}</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>{% if lang == 'ar' %}الهاتف{% else %}Phone{% endif %}</label>
+                            <input type="text" id="companyPhone" value="+966 11 123 4567">
+                        </div>
+                        <div class="form-group">
+                            <label>{% if lang == 'ar' %}البريد الإلكتروني{% else %}Email{% endif %}</label>
+                            <input type="email" id="companyEmail" value="info@{{ company_id }}.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>{% if lang == 'ar' %}العنوان{% else %}Address{% endif %}</label>
+                        <input type="text" id="companyAddress" value="{% if lang == 'ar' %}الرياض، المملكة العربية السعودية{% else %}Riyadh, Saudi Arabia{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Products -->
+        <div id="step-3" class="step-content">
+            <div class="step-header">
+                <h2>{% if lang == 'ar' %}الخطوة 3: إضافة المنتجات{% else %}Step 3: Add Products{% endif %}</h2>
+                <p>{% if lang == 'ar' %}أضف منتجات وخدمات شركتك{% else %}Add your company's products and services{% endif %}</p>
+            </div>
+
+            <div class="products-setup">
+                <div class="setup-actions">
+                    <button class="btn btn-primary" onclick="showAddProductModal()">{% if lang == 'ar' %}إضافة منتج{% else %}Add Product{% endif %}</button>
+                </div>
+
+                <div class="products-grid" id="setup-products-grid">
+                    <!-- Existing SABIC products -->
+                    <div class="product-card">
+                        <div class="product-image-placeholder">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <div class="product-info">
+                            <h3>بولي إيثيلين عالي الكثافة</h3>
+                            <p>بولي إيثيلين عالي الجودة للصناعات البتروكيماوية</p>
+                            <div class="product-details">
+                                <span class="product-price">$1,200.00</span>
+                                <span class="product-stock">500 متوفر</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image-placeholder">
+                            <i class="fas fa-vial"></i>
+                        </div>
+                        <div class="product-info">
+                            <h3>مواد كيميائية متخصصة</h3>
+                            <p>مواد كيميائية متقدمة للصناعات المتخصصة</p>
+                            <div class="product-details">
+                                <span class="product-price">$2,500.00</span>
+                                <span class="product-stock">200 متوفر</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="step-navigation">
+            <button id="prevBtn" class="btn btn-secondary" onclick="changeStep(-1)" style="display: none;">{% if lang == 'ar' %}السابق{% else %}Previous{% endif %}</button>
+            <button id="skipBtn" class="btn btn-outline" onclick="skipStep()">{% if lang == 'ar' %}تخطي{% else %}Skip{% endif %}</button>
+            <button id="nextBtn" class="btn btn-primary" onclick="changeStep(1)">{% if lang == 'ar' %}التالي{% else %}Next{% endif %}</button>
+            <button id="finishBtn" class="btn btn-success" onclick="finishSetup()" style="display: none;">{% if lang == 'ar' %}إنهاء الإعداد{% else %}Finish Setup{% endif %}</button>
+        </div>
+    </div>
+
+    <!-- Add Employee Modal -->
+    <div id="addEmployeeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addEmployeeModal')">&times;</span>
+            <h2 id="addEmployeeTitle">{% if lang == 'ar' %}إضافة موظف جديد{% else %}Add New Employee{% endif %}</h2>
+            <form id="addEmployeeForm">
+                <div class="form-group">
+                    <label for="employeeName">{% if lang == 'ar' %}اسم الموظف{% else %}Employee Name{% endif %}</label>
+                    <input type="text" id="employeeName" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeDepartment">{% if lang == 'ar' %}القسم{% else %}Department{% endif %}</label>
+                    <input type="text" id="employeeDepartment" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="employeePosition">{% if lang == 'ar' %}المنصب{% else %}Position{% endif %}</label>
+                    <input type="text" id="employeePosition" required>
+                </div>
+                <button type="submit" class="btn btn-primary">{% if lang == 'ar' %}إضافة الموظف{% else %}Add Employee{% endif %}</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addProductModal')">&times;</span>
+            <h2>{% if lang == 'ar' %}إضافة منتج جديد{% else %}Add New Product{% endif %}</h2>
+            <form id="addProductForm">
+                <div class="form-group">
+                    <label for="productTitle">{% if lang == 'ar' %}اسم المنتج{% else %}Product Name{% endif %}</label>
+                    <input type="text" id="productTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">{% if lang == 'ar' %}الوصف{% else %}Description{% endif %}</label>
+                    <textarea id="productDescription" required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productPrice">{% if lang == 'ar' %}السعر{% else %}Price{% endif %}</label>
+                        <input type="number" id="productPrice" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productQuantity">{% if lang == 'ar' %}الكمية{% else %}Quantity{% endif %}</label>
+                        <input type="number" id="productQuantity" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">{% if lang == 'ar' %}إضافة المنتج{% else %}Add Product{% endif %}</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+
+        function showStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all progress steps
+            document.querySelectorAll('.progress-step').forEach(progressStep => {
+                progressStep.classList.remove('active');
+            });
+            
+            // Show current step
+            document.getElementById(`step-${step}`).classList.add('active');
+            document.querySelector(`[data-step="${step}"]`).classList.add('active');
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').style.display = step === 1 ? 'none' : 'inline-block';
+            document.getElementById('nextBtn').style.display = step === totalSteps ? 'none' : 'inline-block';
+            document.getElementById('finishBtn').style.display = step === totalSteps ? 'inline-block' : 'none';
+        }
+
+        function changeStep(direction) {
+            const newStep = currentStep + direction;
+            if (newStep >= 1 && newStep <= totalSteps) {
+                currentStep = newStep;
+                showStep(currentStep);
+            }
+        }
+
+        function skipStep() {
+            if (currentStep < totalSteps) {
+                changeStep(1);
+            } else {
+                finishSetup();
+            }
+        }
+
+        function finishSetup() {
+            window.location.href = '{{ url_for("index") }}';
+        }
+
+        function showAddEmployeeModal(department) {
+            document.getElementById('addEmployeeModal').style.display = 'block';
+            document.getElementById('employeeDepartment').value = department;
+            document.getElementById('addEmployeeTitle').textContent = 
+                '{% if lang == "ar" %}إضافة موظف إلى ' + department + '{% else %}Add Employee to ' + department + '{% endif %}';
+        }
+
+        function showAddProductModal() {
+            document.getElementById('addProductModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Handle employee form submission
+        document.getElementById('addEmployeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const employeeName = document.getElementById('employeeName').value;
+            const department = document.getElementById('employeeDepartment').value;
+            
+            // Find the department card and add employee
+            const departmentCards = document.querySelectorAll('.department-card');
+            departmentCards.forEach(card => {
+                const departmentTitle = card.querySelector('h4').textContent;
+                if (departmentTitle === department) {
+                    const employeesContainer = card.querySelector('.department-employees');
+                    
+                    // Remove "no employees" message if it exists
+                    const noEmployeesMsg = employeesContainer.querySelector('p');
+                    if (noEmployeesMsg) {
+                        noEmployeesMsg.remove();
+                    }
+                    
+                    // Add new employee
+                    const newEmployee = document.createElement('div');
+                    newEmployee.className = 'employee-mini-card';
+                    const initials = employeeName.split(' ').map(n => n[0]).join('').toUpperCase();
+                    newEmployee.innerHTML = `
+                        <div class="employee-avatar">${initials}</div>
+                        <span>${employeeName}</span>
+                    `;
+                    employeesContainer.appendChild(newEmployee);
+                }
+            });
+            
+            // Close modal and reset form
+            closeModal('addEmployeeModal');
+            document.getElementById('addEmployeeForm').reset();
+        });
+
+        // Handle product form submission
+        document.getElementById('addProductForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const productTitle = document.getElementById('productTitle').value;
+            const productDescription = document.getElementById('productDescription').value;
+            const productPrice = document.getElementById('productPrice').value;
+            const productQuantity = document.getElementById('productQuantity').value;
+            
+            // Add new product to grid
+            const productsGrid = document.getElementById('setup-products-grid');
+            const newProduct = document.createElement('div');
+            newProduct.className = 'product-card';
+            newProduct.innerHTML = `
+                <div class="product-image-placeholder">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="product-info">
+                    <h3>${productTitle}</h3>
+                    <p>${productDescription}</p>
+                    <div class="product-details">
+                        <span class="product-price">$${parseFloat(productPrice).toFixed(2)}</span>
+                        <span class="product-stock">${productQuantity} {% if lang == 'ar' %}متوفر{% else %}Available{% endif %}</span>
+                    </div>
+                </div>
+            `;
+            productsGrid.appendChild(newProduct);
+            
+            // Close modal and reset form
+            closeModal('addProductModal');
+            document.getElementById('addProductForm').reset();
+        });
+
+        // Initialize
+        showStep(1);
+    </script>
+</body>
+</html>

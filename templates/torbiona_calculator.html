@@ -19,6 +19,10 @@
         .result-approved { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
         .result-declined { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
         .action-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; }
+        .partners-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; justify-items: center; }
+        .partner-logo { width: 120px; height: 60px; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
+        .partner-logo:hover { transform: scale(1.05); }
+        @media (max-width: 768px) { .partners-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
 <body>
@@ -38,27 +42,43 @@
             <h3>{{ 'تحليل تاريخ الشركة' if lang == 'ar' else 'Company History Analysis' }}</h3>
             
             <div class="analysis-item">
-                <span>{{ 'معدل الدفع في الوقت المحدد' if lang == 'ar' else 'On-time Payment Rate' }}</span>
+                <span>{{ 'السلوكي' if lang == 'ar' else 'Behavioral' }}</span>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: {{ score * 0.8 }}%; background: #17a2b8;"></div>
+                    <div class="progress-fill" style="width: {{ behavioral }}%; background: #17a2b8;"></div>
                 </div>
-                <span>{{ (score * 0.8)|round }}%</span>
+                <span>{{ behavioral }}%</span>
             </div>
 
             <div class="analysis-item" style="margin: 1rem 0;">
-                <span>{{ 'حجم المعاملات' if lang == 'ar' else 'Transaction Volume' }}</span>
+                <span>{{ 'المالي' if lang == 'ar' else 'Financial' }}</span>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: {{ score * 0.9 }}%; background: #6f42c1;"></div>
+                    <div class="progress-fill" style="width: {{ financial }}%; background: #6f42c1;"></div>
                 </div>
-                <span>{{ (score * 0.9)|round }}%</span>
+                <span>{{ financial }}%</span>
+            </div>
+
+            <div class="analysis-item" style="margin: 1rem 0;">
+                <span>{{ 'السوق' if lang == 'ar' else 'Market' }}</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ market }}%; background: #28a745;"></div>
+                </div>
+                <span>{{ market }}%</span>
+            </div>
+
+            <div class="analysis-item" style="margin: 1rem 0;">
+                <span>{{ 'التقني والتشغيلي' if lang == 'ar' else 'Technical and Operational' }}</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ technical }}%; background: #fd7e14;"></div>
+                </div>
+                <span>{{ technical }}%</span>
             </div>
 
             <div class="analysis-item">
-                <span>{{ 'التقييم الائتماني' if lang == 'ar' else 'Credit Rating' }}</span>
+                <span>{{ 'الحكومي والتنظيمي' if lang == 'ar' else 'Governmental and Regulatory' }}</span>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: {{ score }}%; background: {{ '#28a745' if approved else '#dc3545' }};"></div>
+                    <div class="progress-fill" style="width: {{ governmental }}%; background: #dc3545;"></div>
                 </div>
-                <span>{{ score }}%</span>
+                <span>{{ governmental }}%</span>
             </div>
 
             <div class="score-display {{ 'score-approved' if approved else 'score-declined' }}">
@@ -75,7 +95,7 @@
             <div class="result-message result-declined">
                 <h3>❌ {{ 'غير مؤهل حالياً' if lang == 'ar' else 'Not Eligible Currently' }}</h3>
                 <p>{{ 'عذراً، لا يمكنك استخدام توربيونا حالياً. يرجى استخدام الدفع الفوري.' if lang == 'ar' else 'Sorry, you cannot use Torbiona payment method now. Please use Pay Now method.' }}</p>
-                <p><strong>{{ 'النتيجة المطلوبة: 60%' if lang == 'ar' else 'Required Score: 60%' }}</strong></p>
+                <p><strong>{{ 'النتيجة المطلوبة: 50%' if lang == 'ar' else 'Required Score: 50%' }}</strong></p>
             </div>
             {% endif %}
 
@@ -93,37 +113,118 @@
                 </button>
             </div>
         </div>
+        
+        <div class="partners-section" style="margin-top: 3rem;">
+            <h3 style="text-align: center; margin-bottom: 2rem;">{{ 'شركاؤنا' if lang == 'ar' else 'Our Partners' }}</h3>
+            <div class="partners-grid">
+                <img src="{{ url_for('static', filename='images/nafath.png') }}" alt="Nafath" class="partner-logo">
+                <img src="{{ url_for('static', filename='images/etimad.png') }}" alt="Etimad" class="partner-logo">
+                <img src="{{ url_for('static', filename='images/simah.png') }}" alt="Simah" class="partner-logo">
+                <img src="{{ url_for('static', filename='images/commerce.png') }}" alt="Commerce" class="partner-logo">
+                <img src="{{ url_for('static', filename='images/gosi.jpg') }}" alt="GOSI" class="partner-logo">
+                <img src="{{ url_for('static', filename='images/nafith.jpg') }}" alt="Nafith" class="partner-logo">
+                <img src="{{ url_for('static', filename='images/najiz.jpg') }}" alt="Najiz" class="partner-logo">
+                <img src="{{ url_for('static', filename='images/zakat.jpg') }}" alt="Zakat" class="partner-logo">
+            </div>
+        </div>
     </div>
 
     <script>
-        const orderData = {{ order_data|safe }};
+        // Parse order data from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderParam = urlParams.get('order');
+        let orderData = null;
+        
+        if (orderParam) {
+            try {
+                orderData = JSON.parse(decodeURIComponent(orderParam));
+                console.log('Parsed order data:', orderData);
+            } catch (e) {
+                console.error('Failed to parse order data:', e);
+            }
+        }
+        
         const approved = {{ 'true' if approved else 'false' }};
 
         function proceedWithTorbiona() {
-            if (approved) {
-                // Process Torbiona payment
-                fetch('/api/purchase', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        company_id: orderData.companyId,
-                        product_id: orderData.productId,
-                        quantity: orderData.quantity,
-                        payment_method: 'torbiona',
-                        total_amount: orderData.totalPrice
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('{{ "تم الدفع بنجاح عبر توربيونا!" if lang == "ar" else "Payment successful via Torbiona!" }}');
-                        window.close();
-                    }
-                });
+            console.log('Proceed with Torbiona clicked');
+            console.log('Approved:', approved);
+            console.log('Order data:', orderData);
+            
+            if (!approved) {
+                alert('{{ "غير مؤهل للدفع عبر توربيونا" if lang == "ar" else "Not eligible for Torbiona payment" }}');
+                return;
             }
+            
+            if (!orderData) {
+                alert('{{ "بيانات الطلب غير متوفرة" if lang == "ar" else "Order data not available" }}');
+                console.error('Order data is null or undefined');
+                return;
+            }
+            
+            // Generate contracts first
+            fetch('/api/generate_contracts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    seller_company: orderData.companyId,
+                    product_title: orderData.productTitle,
+                    quantity: orderData.quantity,
+                    total_amount: orderData.totalPrice
+                })
+            })
+            .then(response => {
+                console.log('Contract response:', response);
+                return response.json();
+            })
+            .then(contractData => {
+                console.log('Contract data:', contractData);
+                if (contractData.success) {
+                    // Then process payment
+                    return fetch('/api/purchase', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            company_id: orderData.companyId,
+                            product_id: orderData.productId,
+                            quantity: orderData.quantity,
+                            payment_method: 'torbiona',
+                            total_amount: orderData.totalPrice
+                        })
+                    });
+                } else {
+                    throw new Error('Contract generation failed');
+                }
+            })
+            .then(response => {
+                console.log('Purchase response:', response);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Purchase data:', data);
+                if (data.success) {
+                    alert('{{ "تم الدفع بنجاح عبر توربيونا! تم إنشاء عقدين: الأول بين المشتري وتوربيونا، والثاني بين المشتري والبائع" if lang == "ar" else "Payment successful via Torbiona! Two contracts generated: 1) Buyer-Torbiona 2) Buyer-Seller" }}');
+                    window.close();
+                } else {
+                    alert('{{ "فشل في الدفع: " if lang == "ar" else "Payment failed: " }}' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('{{ "حدث خطأ في المعاملة: " if lang == "ar" else "Transaction error: " }}' + error.message);
+            });
         }
 
         function usePayNow() {
+            console.log('Pay Now clicked');
+            console.log('Order data:', orderData);
+            
+            if (!orderData) {
+                alert('{{ "بيانات الطلب غير متوفرة" if lang == "ar" else "Order data not available" }}');
+                console.error('Order data is null or undefined');
+                return;
+            }
+            
             // Process immediate payment
             fetch('/api/purchase', {
                 method: 'POST',
@@ -136,12 +237,22 @@
                     total_amount: orderData.totalPrice
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Pay now response:', response);
+                return response.json();
+            })
             .then(data => {
+                console.log('Pay now data:', data);
                 if (data.success) {
-                    alert('{{ "تم الدفع بنجاح!" if lang == "ar" else "Payment successful!" }}');
+                    alert('{{ "تم الدفع بنجاح! تم إنشاء عقد بين المشتري والبائع تلقائياً" if lang == "ar" else "Payment successful! Contract automatically generated between buyer and seller." }}');
                     window.close();
+                } else {
+                    alert('{{ "فشل في الدفع: " if lang == "ar" else "Payment failed: " }}' + data.message);
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('{{ "حدث خطأ في المعاملة: " if lang == "ar" else "Transaction error: " }}' + error.message);
             });
         }
 

@@ -3,111 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ t.contact_seller }} - {{ company.name }}</title>
+    <title>Chat - {{ t.site_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        body { margin: 0; font-family: Arial, sans-serif; }
-        .chat-container { height: 100vh; display: flex; flex-direction: column; }
-        .chat-header { background: #667eea; color: white; padding: 1rem; text-align: center; }
-        .chat-messages { flex: 1; padding: 1rem; overflow-y: auto; background: #f8f9fa; }
-        .message { margin-bottom: 1rem; padding: 0.75rem; border-radius: 10px; max-width: 80%; }
-        .message.user { background: #667eea; color: white; margin-left: auto; }
-        .message.company { background: white; border: 1px solid #ddd; }
-        .message-time { font-size: 0.8rem; opacity: 0.7; margin-top: 0.25rem; }
-        .chat-input { display: flex; padding: 1rem; background: white; border-top: 1px solid #ddd; }
-        .chat-input input { flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 20px; margin-right: 0.5rem; }
-        .chat-input button { padding: 0.75rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 20px; cursor: pointer; }
-        .rtl .message.user { margin-right: auto; margin-left: 0; }
-        .rtl .chat-input input { margin-left: 0.5rem; margin-right: 0; }
-    </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h3>{{ company.name }}</h3>
-            <p>{{ product_title }}</p>
-        </div>
-        
-        <div class="chat-messages" id="chatMessages">
-            <div class="message company">
-                <div>{{ 'مرحباً! كيف يمكنني مساعدتك بخصوص' if lang == 'ar' else 'Hello! How can I help you with' }} {{ product_title }}?</div>
-                <div class="message-time">{{ 'الآن' if lang == 'ar' else 'Now' }}</div>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo"><a href="{{ url_for('index') }}">{{ t.site_name }}</a></h1>
+            <div class="nav-links">
+                {% if from_crm %}
+                <a href="{{ url_for('crm_dashboard') }}" class="btn btn-info">Back to CRM</a>
+                {% else %}
+                <a href="{{ url_for('index') }}" class="btn btn-info">Back to Platform</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary">{{ t.logout }}</a>
             </div>
         </div>
-        
-        <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="{{ 'اكتب رسالتك...' if lang == 'ar' else 'Type your message...' }}" onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()">{{ 'إرسال' if lang == 'ar' else 'Send' }}</button>
+    </nav>
+
+    <div class="container">
+        <div class="chat-page">
+            <div class="chat-header">
+                <h2>💬 Chat with {{ company.name }}</h2>
+                <p>Product: {{ product_title }}</p>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <div class="message welcome">
+                    <p>Hello! I am interested in "{{ product_title }}". How can you help me?</p>
+                </div>
+            </div>
+            
+            <div class="chat-input">
+                <input type="text" id="message-input" placeholder="Type your message..." onkeypress="handleEnter(event)">
+                <button onclick="sendMessage()" class="btn btn-primary">Send</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const chatId = '{{ chat_id }}';
+        let messageCount = 1;
         
         function sendMessage() {
-            const input = document.getElementById('messageInput');
+            const input = document.getElementById('message-input');
             const message = input.value.trim();
             
-            if (message) {
-                // Add user message to chat
-                addMessage(message, 'user');
+            if (!message) return;
+            
+            // Add user message
+            const messagesContainer = document.getElementById('chat-messages');
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message sent';
+            userMessage.innerHTML = `<p>You: ${message}</p>`;
+            messagesContainer.appendChild(userMessage);
+            
+            // Auto-reply from company
+            setTimeout(() => {
+                const replies = [
+                    'Thank you for your interest!',
+                    'We can provide more details about this product.',
+                    'Would you like to schedule a meeting?',
+                    'Our team will contact you soon.',
+                    'Is there anything specific you need to know?'
+                ];
+                const reply = replies[Math.floor(Math.random() * replies.length)];
                 
-                // Send to server
-                fetch(`/api/chat/${chatId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sender: 'Customer',
-                        message: message
-                    })
-                });
+                const companyMessage = document.createElement('div');
+                companyMessage.className = 'message received';
+                companyMessage.innerHTML = `<p>{{ company.name }}: ${reply}</p>`;
+                messagesContainer.appendChild(companyMessage);
                 
-                input.value = '';
-                
-                // Simulate company response
-                setTimeout(() => {
-                    const responses = [
-                        "{{ 'شكراً لاستفسارك. سنتواصل معك قريباً.' if lang == 'ar' else 'Thank you for your inquiry. We will get back to you soon.' }}",
-                        "{{ 'هل تحتاج معلومات إضافية عن هذا المنتج؟' if lang == 'ar' else 'Do you need additional information about this product?' }}",
-                        "{{ 'يمكننا ترتيب عرض توضيحي إذا كنت مهتماً.' if lang == 'ar' else 'We can arrange a demo if you are interested.' }}"
-                    ];
-                    const response = responses[Math.floor(Math.random() * responses.length)];
-                    addMessage(response, 'company');
-                    
-                    fetch(`/api/chat/${chatId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            sender: '{{ company.name }}',
-                            message: response
-                        })
-                    });
-                }, 1000);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 1000);
+            
+            input.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
             }
         }
-        
-        function addMessage(text, sender) {
-            const messagesDiv = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}`;
-            messageDiv.innerHTML = `
-                <div>${text}</div>
-                <div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-            `;
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-        
-        // Load existing messages
-        fetch(`/api/chat/${chatId}`)
-            .then(response => response.json())
-            .then(messages => {
-                messages.forEach(msg => {
-                    if (msg.sender !== 'Customer') {
-                        addMessage(msg.message, msg.sender === '{{ company.name }}' ? 'company' : 'user');
-                    }
-                });
-            });
     </script>
 </body>
 </html>

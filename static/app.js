@@ -238,162 +238,13 @@ function contactSeller(companyId, productTitle) {
     }
 }
 
-function buyProductCRM(companyId, productId, productTitle, price) {
-    const quantityInput = document.getElementById(`crm-qty-${productId}`);
-    const quantity = parseInt(quantityInput.value);
-    
-    if (quantity && quantity > 0) {
-        const totalPrice = (parseFloat(price) * quantity).toFixed(2);
-        
-        // Show Torbiona payment modal (reuse the same function from index.html)
-        showTorbionePaymentCRM({
-            companyId: companyId,
-            productId: productId,
-            productTitle: productTitle,
-            quantity: quantity,
-            unitPrice: price,
-            totalPrice: totalPrice
-        });
-    } else {
-        alert('Please select a valid quantity.');
-    }
-}
+// buyProductCRM function moved to CRM page inline JavaScript
 
-function showTorbionePaymentCRM(orderData) {
-    const modal = document.createElement('div');
-    modal.className = 'torbiona-modal';
-    modal.innerHTML = `
-        <div class="torbiona-modal-content">
-            <span class="close" onclick="closeTorbioneModal()">&times;</span>
-            <div class="torbiona-header">
-                <h2>🔒 Secure B2B Payment with Torbiona</h2>
-                <p>Professional procurement made easy</p>
-            </div>
-            
-            <div class="order-summary">
-                <h3>Purchase Order Summary</h3>
-                <div class="order-item">
-                    <span class="item-name">${orderData.productTitle}</span>
-                    <span class="item-details">Qty: ${orderData.quantity} × $${orderData.unitPrice}</span>
-                    <span class="item-total">$${orderData.totalPrice}</span>
-                </div>
-                <div class="order-total">
-                    <strong>Total: $${orderData.totalPrice}</strong>
-                </div>
-            </div>
-            
-            <div class="torbiona-payment">
-                <h3>B2B Payment Method</h3>
-                <div class="payment-options">
-                    <label class="payment-option">
-                        <input type="radio" name="payment" value="torbiona-corporate" checked>
-                        <span class="payment-icon">🏢</span>
-                        <span>Corporate Account</span>
-                    </label>
-                    <label class="payment-option">
-                        <input type="radio" name="payment" value="torbiona-credit">
-                        <span class="payment-icon">💳</span>
-                        <span>Business Credit Line</span>
-                    </label>
-                    <label class="payment-option">
-                        <input type="radio" name="payment" value="torbiona-invoice">
-                        <span class="payment-icon">📄</span>
-                        <span>Net 30 Invoice</span>
-                    </label>
-                </div>
-                
-                <div class="torbiona-security">
-                    <p>🛡️ Enterprise-grade security by Torbiona</p>
-                    <p>✅ PCI DSS Level 1 compliant</p>
-                    <p>🔐 Multi-signature authorization</p>
-                    <p>📊 Real-time transaction tracking</p>
-                </div>
-                
-                <button class="btn btn-primary btn-full" onclick="processTorbionePaymentCRM(${JSON.stringify(orderData).replace(/"/g, '&quot;')})">
-                    Process B2B Payment with Torbiona
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    modal.style.display = 'block';
-}
+// B2B payment function removed - using enhanced Torbiona modal from CRM page
 
-function processTorbionePaymentCRM(orderData) {
-    const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-    
-    // Show processing animation
-    const button = event.target;
-    button.innerHTML = '🔄 Processing B2B Payment...';
-    button.disabled = true;
-    
-    // Simulate Torbiona B2B payment processing
-    setTimeout(() => {
-        fetch('/api/purchase', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                company_id: orderData.companyId,
-                product_id: orderData.productId,
-                quantity: orderData.quantity,
-                payment_method: paymentMethod,
-                total_amount: orderData.totalPrice,
-                b2b_purchase: true
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            closeTorbioneModal();
-            if (data.success) {
-                showB2BSuccessModal(orderData, paymentMethod);
-                // Refresh the marketplace section
-                location.reload();
-            } else {
-                alert('Payment failed: ' + data.message);
-            }
-        })
-        .catch(error => {
-            closeTorbioneModal();
-            alert('Payment processing error. Please try again.');
-        });
-    }, 2500);
-}
+// B2B payment processing function removed
 
-function showB2BSuccessModal(orderData, paymentMethod) {
-    const modal = document.createElement('div');
-    modal.className = 'success-modal';
-    modal.innerHTML = `
-        <div class="success-modal-content">
-            <div class="success-header">
-                <div class="success-icon">✅</div>
-                <h2>Purchase Order Confirmed!</h2>
-                <p>B2B transaction completed successfully</p>
-            </div>
-            
-            <div class="success-details">
-                <h3>Purchase Order Details</h3>
-                <p><strong>Product:</strong> ${orderData.productTitle}</p>
-                <p><strong>Quantity:</strong> ${orderData.quantity}</p>
-                <p><strong>Total Amount:</strong> $${orderData.totalPrice}</p>
-                <p><strong>Payment Method:</strong> ${paymentMethod.replace('-', ' ').toUpperCase()}</p>
-                <p><strong>PO Number:</strong> PO-${Date.now()}</p>
-                <p><strong>Delivery:</strong> 5-7 business days</p>
-            </div>
-            
-            <div class="success-actions">
-                <button class="btn btn-primary" onclick="closeSuccessModal()">
-                    Continue Procurement
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    modal.style.display = 'block';
-}
+// B2B success modal function removed
 
 // Utility functions
 function formatCurrency(amount) {
@@ -459,6 +310,117 @@ function updateDashboardStats() {
     const lowStockElements = document.querySelectorAll('.stat-card .stat-number');
     if (lowStockElements[1]) {
         lowStockElements[1].textContent = lowStockItems.length;
+    }
+}
+
+// B2B Features Functions
+function generatePO() {
+    const poNumber = 'PO-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+    alert(`Purchase Order ${poNumber} generated successfully!\nPDF will be available for download.`);
+}
+
+function downloadPDF(poNumber) {
+    alert(`Downloading PDF for ${poNumber}...\nIn production, this would generate and download a PDF file.`);
+}
+
+function createContract() {
+    const contractId = 'CONTRACT-' + Date.now();
+    alert(`New contract ${contractId} created!\nRedirecting to contract editor...`);
+}
+
+function viewContract(contractId) {
+    alert(`Opening contract ${contractId}...\nIn production, this would open the contract viewer.`);
+}
+
+// Chat functionality
+let currentChatId = null;
+
+function contactSellerCRM(companyId, productTitle) {
+    const message = prompt(`Send a message about "${productTitle}":`);
+    if (message) {
+        fetch('/api/contact_company', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                company: companyId,
+                product: productTitle,
+                message: message
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                openChatWindow(data.chat_id, productTitle);
+                showSection('chat');
+            } else {
+                alert(data.error || 'Failed to start chat');
+            }
+        });
+    }
+}
+
+function openChatWindow(chatId, title) {
+    currentChatId = chatId;
+    document.getElementById('chat-title').textContent = `Chat: ${title}`;
+    document.getElementById('chat-window').style.display = 'block';
+    loadChatMessages();
+}
+
+function closeChatWindow() {
+    document.getElementById('chat-window').style.display = 'none';
+    currentChatId = null;
+}
+
+function loadChatMessages() {
+    if (!currentChatId) return;
+    
+    fetch(`/api/chat/${currentChatId}`)
+        .then(response => response.json())
+        .then(messages => {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = '';
+            messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'chat-message';
+                div.innerHTML = `
+                    <div class="message-header">
+                        <strong>${msg.sender}</strong>
+                        <span class="timestamp">${msg.timestamp}</span>
+                    </div>
+                    <div class="message-content">${msg.message}</div>
+                `;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+        });
+}
+
+function sendMessage() {
+    if (!currentChatId) return;
+    
+    const input = document.getElementById('message-input');
+    const message = input.value.trim();
+    if (message) {
+        fetch(`/api/chat/${currentChatId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                input.value = '';
+                loadChatMessages();
+            } else {
+                alert(data.error || 'Failed to send message');
+            }
+        });
+    }
+}
+
+function handleEnter(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
     }
 }
 

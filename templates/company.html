@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ company.name }} - {{ t.site_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="company-body">
+    <nav class="navbar-professional">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="{{ url_for('index') }}" class="brand-link">
+                    <i class="fas fa-building"></i>
+                    <span>{{ t.site_name }}</span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                <a href="{{ url_for('index') }}" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>{% if lang == 'ar' %}المنصة{% else %}Platform{% endif %}</span>
+                </a>
+                {% if session.company_id %}
+                    <a href="{{ url_for('crm_dashboard') }}" class="nav-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>{{ t.crm_dashboard }}</span>
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="nav-item logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>{{ t.logout }}</span>
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-item login">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>{{ t.login }}</span>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="company-main">
+        <!-- Hero Section -->
+        <section class="hero-professional">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="company-badge">
+                    <i class="fas fa-award"></i>
+                    <span>{% if lang == 'ar' %}شركة معتمدة{% else %}Certified Company{% endif %}</span>
+                </div>
+                <h1 class="company-title">{{ company.name }}</h1>
+                <p class="company-subtitle">{{ company.industry }}</p>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ company_products|length }}</span>
+                            <span class="stat-label">{% if lang == 'ar' %}منتج{% else %}Products{% endif %}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ company.employees|length }}</span>
+                            <span class="stat-label">{% if lang == 'ar' %}موظف{% else %}Employees{% endif %}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number">15+</span>
+                            <span class="stat-label">{% if lang == 'ar' %}سنة خبرة{% else %}Years{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <a href="#contact" class="btn-hero primary">
+                        <i class="fas fa-phone"></i>
+                        <span>{% if lang == 'ar' %}تواصل معنا{% else %}Contact Us{% endif %}</span>
+                    </a>
+                    <a href="#products" class="btn-hero secondary">
+                        <i class="fas fa-eye"></i>
+                        <span>{% if lang == 'ar' %}عرض المنتجات{% else %}View Products{% endif %}</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section class="about-professional">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">{% if lang == 'ar' %}عن الشركة{% else %}About{% endif %}</span>
+                    <h2 class="section-title">{% if lang == 'ar' %}من نحن{% else %}Who We Are{% endif %}</h2>
+                    <p class="section-subtitle">{% if lang == 'ar' %}نحن نقدم حلول متميزة في قطاع البناء والتطوير{% else %}We deliver exceptional solutions in construction and development{% endif %}</p>
+                </div>
+                <div class="about-content">
+                    <div class="about-text">
+                        <p class="lead-text">{{ company_info.about_us or (company.name + ' is a leading company in the ' + company.industry + ' sector, committed to delivering excellence and innovation in every project we undertake.') }}</p>
+                        <div class="features-list">
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>{% if lang == 'ar' %}جودة عالية في التنفيذ{% else %}High Quality Execution{% endif %}</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>{% if lang == 'ar' %}التزام بالمواعيد{% else %}On-Time Delivery{% endif %}</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>{% if lang == 'ar' %}خدمة عملاء متميزة{% else %}Excellent Customer Service{% endif %}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="about-visual">
+                        <div class="visual-card">
+                            <div class="visual-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <h4>{% if lang == 'ar' %}الريادة{% else %}Leadership{% endif %}</h4>
+                            <p>{% if lang == 'ar' %}رواد في مجال البناء والتطوير{% else %}Leaders in construction and development{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="products" class="products-professional">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">{% if lang == 'ar' %}منتجاتنا{% else %}Products{% endif %}</span>
+                    <h2 class="section-title">{% if lang == 'ar' %}منتجاتنا وخدماتنا{% else %}Our Products & Services{% endif %}</h2>
+                    <p class="section-subtitle">{% if lang == 'ar' %}نقدم مجموعة متنوعة من المنتجات عالية الجودة{% else %}We offer a diverse range of high-quality products{% endif %}</p>
+                </div>
+                <div class="products-showcase">
+                    {% for product in company_products %}
+                    <div class="product-card-professional">
+                        <div class="product-image">
+                            <div class="product-badge">
+                                <i class="fas fa-star"></i>
+                                <span>{% if lang == 'ar' %}مميز{% else %}Featured{% endif %}</span>
+                            </div>
+                            <div class="product-overlay">
+                                <div class="overlay-content">
+                                    <i class="fas fa-eye"></i>
+                                    <span>{% if lang == 'ar' %}عرض التفاصيل{% else %}View Details{% endif %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category">
+                                <i class="fas fa-tag"></i>
+                                <span>{{ company.industry }}</span>
+                            </div>
+                            <h3 class="product-name">{{ product.title }}</h3>
+                            <p class="product-desc">{{ product.description }}</p>
+                            <div class="product-footer">
+                                <div class="price-info">
+                                    <span class="price-label">{% if lang == 'ar' %}السعر{% else %}Price{% endif %}</span>
+                                    <span class="price-value">${{ "%.2f"|format(product.price) }}</span>
+                                </div>
+                                <div class="stock-info">
+                                    <i class="fas fa-box"></i>
+                                    <span>{{ product.quantity }} {% if lang == 'ar' %}متوفر{% else %}Available{% endif %}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Achievements Section -->
+        <section class="achievements-professional">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">{% if lang == 'ar' %}إنجازاتنا{% else %}Achievements{% endif %}</span>
+                    <h2 class="section-title">{% if lang == 'ar' %}أعمالنا ونجاحاتنا{% else %}Our Work & Achievements{% endif %}</h2>
+                    <p class="section-subtitle">{% if lang == 'ar' %}فخورون بإنجازاتنا وثقة عملائنا{% else %}Proud of our achievements and client trust{% endif %}</p>
+                </div>
+                <div class="achievements-grid">
+                    <div class="achievement-card">
+                        <div class="achievement-visual">
+                            <div class="achievement-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="achievement-number">200+</div>
+                        </div>
+                        <div class="achievement-details">
+                            <h3>{% if lang == 'ar' %}مشاريع كبرى{% else %}Major Projects{% endif %}</h3>
+                            <p>{% if lang == 'ar' %}أكملنا أكثر من 200 مشروع بناء كبير في المملكة{% else %}Completed over 200 major construction projects across Saudi Arabia{% endif %}</p>
+                        </div>
+                    </div>
+                    <div class="achievement-card">
+                        <div class="achievement-visual">
+                            <div class="achievement-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="achievement-number">2023</div>
+                        </div>
+                        <div class="achievement-details">
+                            <h3>{% if lang == 'ar' %}جوائز التميز{% else %}Excellence Awards{% endif %}</h3>
+                            <p>{% if lang == 'ar' %}حاصلون على جائزة أفضل شركة في القطاع لعام 2023{% else %}Winner of Best Company in Sector Award 2023{% endif %}</p>
+                        </div>
+                    </div>
+                    <div class="achievement-card">
+                        <div class="achievement-visual">
+                            <div class="achievement-icon">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="achievement-number">98%</div>
+                        </div>
+                        <div class="achievement-details">
+                            <h3>{% if lang == 'ar' %}رضا العملاء{% else %}Customer Satisfaction{% endif %}</h3>
+                            <p>{% if lang == 'ar' %}معدل رضا العملاء 98% مع أكثر من 500 عميل راضي{% else %}98% customer satisfaction rate with over 500 satisfied clients{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Customer Reviews Section -->
+        <section class="reviews-professional">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">{% if lang == 'ar' %}التقييمات{% else %}Reviews{% endif %}</span>
+                    <h2 class="section-title">{% if lang == 'ar' %}آراء عملائنا{% else %}Customer Reviews{% endif %}</h2>
+                    <p class="section-subtitle">{% if lang == 'ar' %}ما يقوله عملاؤنا عن خدماتنا{% else %}What our clients say about our services{% endif %}</p>
+                </div>
+                
+                <div class="reviews-summary">
+                    <div class="overall-rating">
+                        <div class="rating-number">4.6</div>
+                        <div class="rating-stars">
+                            <span class="star filled">★</span>
+                            <span class="star filled">★</span>
+                            <span class="star filled">★</span>
+                            <span class="star filled">★</span>
+                            <span class="star half">★</span>
+                        </div>
+                        <div class="rating-text">{% if lang == 'ar' %}من 42 تقييم{% else %}Based on 42 reviews{% endif %}</div>
+                    </div>
+                </div>
+                
+                <div class="reviews-grid">
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-info">
+                                <div class="reviewer-avatar">M</div>
+                                <div class="reviewer-details">
+                                    <h4>محمد العمري</h4>
+                                    <p>مجموعة بن لادن</p>
+                                </div>
+                            </div>
+                            <div class="review-rating">
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                            </div>
+                        </div>
+                        <div class="review-content">
+                            <p>{% if lang == 'ar' %}خدمة ممتازة وجودة عالية في المنتجات. التسليم في الوقت المحدد وفريق عمل متعاون.{% else %}Excellent service and high-quality products. On-time delivery and cooperative team.{% endif %}</p>
+                        </div>
+                        <div class="review-date">{% if lang == 'ar' %}منذ أسبوعين{% else %}2 weeks ago{% endif %}</div>
+                    </div>
+                    
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-info">
+                                <div class="reviewer-avatar">A</div>
+                                <div class="reviewer-details">
+                                    <h4>أحمد الخالد</h4>
+                                    <p>نسما وشركاهم</p>
+                                </div>
+                            </div>
+                            <div class="review-rating">
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star">☆</span>
+                            </div>
+                        </div>
+                        <div class="review-content">
+                            <p>{% if lang == 'ar' %}منتجات جيدة وأسعار معقولة. هناك تأخير بسيط في التسليم ولكن الجودة ممتازة.{% else %}Good products and reasonable prices. Slight delivery delay but excellent quality.{% endif %}</p>
+                        </div>
+                        <div class="review-date">{% if lang == 'ar' %}منذ شهر{% else %}1 month ago{% endif %}</div>
+                    </div>
+                    
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-info">
+                                <div class="reviewer-avatar">S</div>
+                                <div class="reviewer-details">
+                                    <h4>سلمان الدوسري</h4>
+                                    <p>البواني</p>
+                                </div>
+                            </div>
+                            <div class="review-rating">
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                            </div>
+                        </div>
+                        <div class="review-content">
+                            <p>{% if lang == 'ar' %}شركة موثوقة وخدمة عملاء ممتازة. أنصح بالتعامل معهم.{% else %}Reliable company with excellent customer service. Highly recommend working with them.{% endif %}</p>
+                        </div>
+                        <div class="review-date">{% if lang == 'ar' %}منذ 3 أسابيع{% else %}3 weeks ago{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Team Section -->
+        <section class="team-professional">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">{% if lang == 'ar' %}الفريق{% else %}Team{% endif %}</span>
+                    <h2 class="section-title">{% if lang == 'ar' %}فريق العمل{% else %}Our Team{% endif %}</h2>
+                    <p class="section-subtitle">{% if lang == 'ar' %}فريق من الخبراء المتخصصين{% else %}A team of specialized experts{% endif %}</p>
+                </div>
+                <div class="team-showcase">
+                    {% for emp_id, employee in company.employees.items() %}
+                    <div class="team-card">
+                        <div class="team-member-photo">
+                            <div class="member-avatar">
+                                <span class="member-letter">{{ employee.name[0] }}</span>
+                            </div>
+                            <div class="member-role-badge">{{ employee.role|title }}</div>
+                        </div>
+                        <div class="member-info">
+                            <h3 class="member-name">{{ employee.name }}</h3>
+                            <p class="member-title">{{ employee.role|title }}</p>
+                            <div class="member-contact">
+                                <a href="#" class="contact-link">
+                                    <i class="fas fa-envelope"></i>
+                                </a>
+                                <a href="#" class="contact-link">
+                                    <i class="fas fa-phone"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="contact-professional">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">{% if lang == 'ar' %}تواصل{% else %}Contact{% endif %}</span>
+                    <h2 class="section-title">{% if lang == 'ar' %}تواصل معنا{% else %}Contact Us{% endif %}</h2>
+                    <p class="section-subtitle">{% if lang == 'ar' %}نحن هنا لخدمتكم في أي وقت{% else %}We're here to serve you anytime{% endif %}</p>
+                </div>
+                <div class="contact-content">
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <div class="contact-icon-wrapper">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h4>{% if lang == 'ar' %}العنوان{% else %}Address{% endif %}</h4>
+                                <p>{% if lang == 'ar' %}الرياض، المملكة العربية السعودية{% else %}Riyadh, Saudi Arabia{% endif %}</p>
+                                <span class="contact-note">{% if lang == 'ar' %}مكتبنا الرئيسي{% else %}Main Office{% endif %}</span>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon-wrapper">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h4>{% if lang == 'ar' %}الهاتف{% else %}Phone{% endif %}</h4>
+                                <p>+966 11 123 4567</p>
+                                <span class="contact-note">{% if lang == 'ar' %}متاح 24/7{% else %}Available 24/7{% endif %}</span>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon-wrapper">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h4>{% if lang == 'ar' %}البريد الإلكتروني{% else %}Email{% endif %}</h4>
+                                <p>info@{{ company_id }}.com</p>
+                                <span class="contact-note">{% if lang == 'ar' %}رد سريع{% else %}Quick Response{% endif %}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contact-cta">
+                        <div class="cta-content">
+                            <h3>{% if lang == 'ar' %}ابدأ مشروعك معنا{% else %}Start Your Project{% endif %}</h3>
+                            <p>{% if lang == 'ar' %}تواصل معنا اليوم للحصول على استشارة مجانية{% else %}Contact us today for a free consultation{% endif %}</p>
+                            <div class="cta-buttons">
+                                <a href="tel:+966111234567" class="btn-large btn-primary">
+                                    <i class="fas fa-phone"></i>
+                                    <span>{% if lang == 'ar' %}اتصل الآن{% else %}Call Now{% endif %}</span>
+                                </a>
+                                <a href="mailto:info@{{ company_id }}.com" class="btn-large btn-outline">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>{% if lang == 'ar' %}أرسل رسالة{% else %}Send Message{% endif %}</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer-professional">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>{{ company.name }}</h3>
+                    <p>{% if lang == 'ar' %}شريكك الموثوق في البناء والتطوير{% else %}Your trusted partner in construction and development{% endif %}</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#about">{% if lang == 'ar' %}عن الشركة{% else %}About{% endif %}</a>
+                    <a href="#products">{% if lang == 'ar' %}المنتجات{% else %}Products{% endif %}</a>
+                    <a href="#contact">{% if lang == 'ar' %}تواصل{% else %}Contact{% endif %}</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 {% if lang == 'ar' %}منصة مزانين{% else %}Mizzanine Platform{% endif %}. {% if lang == 'ar' %}جميع الحقوق محفوظة{% else %}All rights reserved{% endif %}.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,87 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Mizzanine</title>
+    <title>{{ t.login }} - {{ t.site_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="{% if lang == 'ar' %}rtl{% endif %}">
     <nav class="navbar">
         <div class="nav-container">
-            <h1 class="nav-logo"><a href="{{ url_for('index') }}">Mizzanine</a></h1>
+            <h1 class="nav-logo"><a href="{{ url_for('index') }}">{{ t.site_name }}</a></h1>
+            <div class="nav-links">
+                <div class="nav-controls">
+                    <button onclick="toggleDarkMode()" class="btn btn-dark-toggle" title="Toggle Dark Mode">
+                        <span class="dark-icon">🌙</span>
+                        <span class="light-icon">☀️</span>
+                    </button>
+                    <div class="language-switcher">
+                        <a href="{{ url_for('login', lang='en') }}" class="lang-btn {{ 'active' if lang == 'en' else '' }}">EN</a>
+                        <a href="{{ url_for('login', lang='ar') }}" class="lang-btn {{ 'active' if lang == 'ar' else '' }}">عربي</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
     <div class="login-container">
         <div class="login-card">
-            <h2>Login to Mizzanine</h2>
+            <h2>{{ t.login }} {{ t.site_name }}</h2>
             
             {% if error %}
             <div class="error-message">{{ error }}</div>
             {% endif %}
+            {% if success %}
+            <div class="success-message">{{ success }}</div>
+            {% endif %}
 
             <div class="login-tabs">
-                <button class="tab-btn active" onclick="showTab('company')">Company Login</button>
-                <button class="tab-btn" onclick="showTab('employee')">Employee Login</button>
+                <button class="tab-btn active" onclick="showTab('company')">{{ t.company_login }}</button>
+                <button class="tab-btn" onclick="showTab('employee')">{{ t.employee_login }}</button>
+                <button class="tab-btn" onclick="showTab('register')">{{ t.register_company }}</button>
             </div>
 
             <!-- Company Login Form -->
             <form id="company-form" class="login-form active" method="POST" action="{{ url_for('login') }}">
                 <div class="form-group">
-                    <label for="company_id">Company</label>
+                    <label for="company_id">{{ t.company_name }}</label>
                     <select name="company_id" id="company_id" required>
-                        <option value="">Select Company</option>
+                        <option value="">{% if lang == 'ar' %}اختر شركة{% else %}Select Company{% endif %}</option>
                         {% for company_id, company in companies.items() %}
                         <option value="{{ company_id }}">{{ company.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="password">Company Password</label>
+                    <label for="password">{{ t.password }}</label>
                     <input type="password" name="password" id="password" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-full">Login as Company Admin</button>
+                <button type="submit" class="btn btn-primary btn-full">{{ t.company_login }}</button>
             </form>
 
             <!-- Employee Login Form -->
             <form id="employee-form" class="login-form" method="POST" action="{{ url_for('employee_login') }}">
                 <div class="form-group">
-                    <label for="emp_company_id">Company</label>
+                    <label for="emp_company_id">{{ t.company_name }}</label>
                     <select name="company_id" id="emp_company_id" required>
-                        <option value="">Select Company</option>
+                        <option value="">{% if lang == 'ar' %}اختر شركة{% else %}Select Company{% endif %}</option>
                         {% for company_id, company in companies.items() %}
                         <option value="{{ company_id }}">{{ company.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="employee_id">Employee ID</label>
+                    <label for="employee_id">{{ t.employee_id }}</label>
                     <input type="text" name="employee_id" id="employee_id" placeholder="e.g., john_manager" required>
                 </div>
                 <div class="form-group">
-                    <label for="emp_password">Password</label>
+                    <label for="emp_password">{{ t.password }}</label>
                     <input type="password" name="password" id="emp_password" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-full">Login as Employee</button>
+                <button type="submit" class="btn btn-primary btn-full">{{ t.employee_login }}</button>
+            </form>
+
+            <!-- Company Registration Form -->
+            <form id="register-form" class="login-form" method="POST" action="{{ url_for('register_company') }}">
+                <div class="form-group">
+                    <label for="reg_company_id">{{ t.company_id }}</label>
+                    <input type="text" name="company_id" id="reg_company_id" placeholder="e.g., mycompany" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg_company_name">{{ t.company_name }}</label>
+                    <input type="text" name="company_name" id="reg_company_name" required>
+                </div>
+                <div class="form-group">
+                    <label>{% if lang == 'ar' %}القطاعات{% else %}Sectors{% endif %}</label>
+                    <div class="checkbox-grid" id="sectors-grid">
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="A" onchange="updateBranches()"> 🅰️ {% if lang == 'ar' %}الزراعة، الحراجة وصيد الأسماك{% else %}Agriculture, forestry and fishing{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="B" onchange="updateBranches()"> 🅱️ {% if lang == 'ar' %}التعدين واستغلال المحاجر{% else %}Mining and quarrying{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="C" onchange="updateBranches()"> 🅲️ {% if lang == 'ar' %}الصناعات التحويلية{% else %}Manufacturing{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="D" onchange="updateBranches()"> 🅳 {% if lang == 'ar' %}إمدادات الكهرباء والغاز والبخار وتكييف الهواء{% else %}Electricity, gas, steam and air conditioning supply{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="E" onchange="updateBranches()"> 🅴 {% if lang == 'ar' %}إمدادات المياه والصرف الصحي وإدارة النفايات{% else %}Water supply; sewerage, waste management{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="F" onchange="updateBranches()"> 🅵 {% if lang == 'ar' %}البناء{% else %}Construction{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="G" onchange="updateBranches()"> 🅶 {% if lang == 'ar' %}تجارة الجملة والتجزئة وإصلاح المركبات{% else %}Wholesale and retail trade; repair of motor vehicles{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="H" onchange="updateBranches()"> 🅷 {% if lang == 'ar' %}النقل والتخزين{% else %}Transportation and storage{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="I" onchange="updateBranches()"> 🅸 {% if lang == 'ar' %}الإقامة وخدمات الطعام{% else %}Accommodation and food service activities{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="J" onchange="updateBranches()"> 🅹 {% if lang == 'ar' %}المعلومات والاتصالات{% else %}Information and communication{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="K" onchange="updateBranches()"> 🅺 {% if lang == 'ar' %}الأنشطة المالية وأنشطة التأمين{% else %}Financial and insurance activities{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="L" onchange="updateBranches()"> 🅻 {% if lang == 'ar' %}الأنشطة العقارية{% else %}Real estate activities{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="M" onchange="updateBranches()"> 🅼 {% if lang == 'ar' %}الأنشطة المهنية والعلمية والتقنية{% else %}Professional, scientific and technical activities{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="N" onchange="updateBranches()"> 🅽 {% if lang == 'ar' %}الخدمات الإدارية والدعم{% else %}Administrative and support service activities{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="O" onchange="updateBranches()"> 🅾️ {% if lang == 'ar' %}الإدارة العامة والدفاع والضمان الاجتماعي{% else %}Public administration and defence{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="P" onchange="updateBranches()"> 🅿️ {% if lang == 'ar' %}التعليم{% else %}Education{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="Q" onchange="updateBranches()"> 🆀 {% if lang == 'ar' %}الصحة والعمل الاجتماعي{% else %}Human health and social work activities{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="R" onchange="updateBranches()"> 🆁 {% if lang == 'ar' %}الفنون والترفيه والتسلية{% else %}Arts, entertainment and recreation{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="S" onchange="updateBranches()"> 🆂 {% if lang == 'ar' %}الخدمات الأخرى{% else %}Other service activities{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="T" onchange="updateBranches()"> 🆃 {% if lang == 'ar' %}أنشطة الأسر كأرباب عمل{% else %}Activities of households as employers{% endif %}</label>
+                        <label class="checkbox-item"><input type="checkbox" name="sectors" value="U" onchange="updateBranches()"> 🆄 {% if lang == 'ar' %}الأنشطة الخارجية للمنظمات والهيئات{% else %}Activities of extraterritorial organizations{% endif %}</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>{% if lang == 'ar' %}الفروع{% else %}Branches{% endif %}</label>
+                    <div class="checkbox-grid" id="branches-grid">
+                        <p class="help-text">{% if lang == 'ar' %}اختر القطاعات أولاً لعرض الفروع{% else %}Select sectors first to show branches{% endif %}</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reg_commercial_registration">{{ t.commercial_registration }}</label>
+                    <input type="text" name="commercial_registration" id="reg_commercial_registration" placeholder="{% if lang == 'ar' %}رقم السجل التجاري{% else %}Commercial Registration Number{% endif %}" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg_password">{{ t.password }}</label>
+                    <input type="password" name="password" id="reg_password" required>
+                </div>
+                <a href="{{ url_for('register_sabic') }}" class="btn btn-primary btn-full">{{ t.register_company }}</a>
             </form>
 
             <div class="demo-accounts">
-                <h3>Demo Accounts</h3>
+                <h3>{{ t.demo_accounts }}</h3>
                 <div class="demo-section">
-                    <h4>Company Logins:</h4>
+                    <h4>{% if lang == 'ar' %}حسابات الشركات:{% else %}Company Logins:{% endif %}</h4>
                     <ul>
-                        <li><strong>BuildTech Construction:</strong> techcorp / tech123</li>
-                        <li><strong>Global Materials:</strong> globaltech / global123</li>
-                        <li><strong>ProBuild Equipment:</strong> innovate / innovate123</li>
+                        <li><strong>مجموعة بن لادن:</strong> binladin / binladin123</li>
+                        <li><strong>نسما وشركاهم:</strong> nesma / nesma123</li>
+                        <li><strong>السيف للمقاولات:</strong> alsaif / alsaif123</li>
+                        <li><strong>البواني:</strong> albawani / albawani123</li>
+                        <li><strong>المباني:</strong> almabani / almabani123</li>
+                        <li><strong>فاست لوجيستك:</strong> fastlogistics / fast123</li>
                     </ul>
                 </div>
                 <div class="demo-section">
-                    <h4>Employee Logins (BuildTech):</h4>
+                    <h4>{% if lang == 'ar' %}حسابات الموظفين (بن لادن):{% else %}Employee Logins (Bin Laden):{% endif %}</h4>
                     <ul>
-                        <li><strong>Manager:</strong> john_manager / john123</li>
-                        <li><strong>Sales:</strong> sarah_sales / sarah123</li>
-                        <li><strong>Purchase:</strong> mike_purchase / mike123</li>
+                        <li><strong>{% if lang == 'ar' %}مدير:{% else %}Manager:{% endif %}</strong> mohammed_manager / mohammed123</li>
+                        <li><strong>{% if lang == 'ar' %}مبيعات:{% else %}Sales:{% endif %}</strong> fatima_sales / fatima123</li>
+                        <li><strong>{% if lang == 'ar' %}مشتريات:{% else %}Purchase:{% endif %}</strong> abdullah_purchase / abdullah123</li>
+                        <li><strong>{% if lang == 'ar' %}تسويق:{% else %}Marketing:{% endif %}</strong> layla_marketing / layla123</li>
+                    </ul>
+                </div>
+                <div class="demo-section">
+                    <h4>{% if lang == 'ar' %}حسابات الموظفين (نسما):{% else %}Employee Logins (Nesma):{% endif %}</h4>
+                    <ul>
+                        <li><strong>{% if lang == 'ar' %}مدير:{% else %}Manager:{% endif %}</strong> ahmed_manager / ahmed123</li>
+                        <li><strong>{% if lang == 'ar' %}مبيعات:{% else %}Sales:{% endif %}</strong> sara_sales / sara123</li>
+                        <li><strong>{% if lang == 'ar' %}مشتريات:{% else %}Purchase:{% endif %}</strong> omar_purchase / omar123</li>
+                        <li><strong>{% if lang == 'ar' %}تسويق:{% else %}Marketing:{% endif %}</strong> huda_marketing / huda123</li>
+                    </ul>
+                </div>
+                <div class="demo-section">
+                    <h4>{% if lang == 'ar' %}حسابات الموظفين (فاست لوجيستك):{% else %}Employee Logins (Fast Logistics):{% endif %}</h4>
+                    <ul>
+                        <li><strong>{% if lang == 'ar' %}مدير:{% else %}Manager:{% endif %}</strong> khalil_manager / khalil123</li>
+                        <li><strong>{% if lang == 'ar' %}مبيعات:{% else %}Sales:{% endif %}</strong> laila_sales / laila123</li>
+                        <li><strong>{% if lang == 'ar' %}مشتريات:{% else %}Purchase:{% endif %}</strong> tariq_purchase / tariq123</li>
+                        <li><strong>{% if lang == 'ar' %}تسويق:{% else %}Marketing:{% endif %}</strong> rania_marketing / rania123</li>
                     </ul>
                 </div>
             </div>
@@ -104,10 +195,185 @@
             if (tabName === 'company') {
                 document.getElementById('company-form').classList.add('active');
                 document.querySelector('.tab-btn').classList.add('active');
-            } else {
+            } else if (tabName === 'employee') {
                 document.getElementById('employee-form').classList.add('active');
                 document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            } else if (tabName === 'register') {
+                document.getElementById('register-form').classList.add('active');
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
             }
+        }
+        
+        function switchLanguage(lang) {
+            window.location.href = `/login/${lang}`;
+        }
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+        
+        // Load dark mode preference
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+        });
+        
+        function updateBranches() {
+            const selectedSectors = Array.from(document.querySelectorAll('input[name="sectors"]:checked')).map(cb => cb.value);
+            const branchesGrid = document.getElementById('branches-grid');
+            
+            branchesGrid.innerHTML = '';
+            
+            const branches = {
+                'A': [
+                    {code: '01', ar: 'الزراعة وتربية الحيوانات والصيد والخدمات التابعة', en: 'Crop and animal production, hunting and related service activities'},
+                    {code: '02', ar: 'الحراجة وقطع الأشجار', en: 'Forestry and logging'},
+                    {code: '03', ar: 'صيد الأسماك وتربية الأحياء المائية', en: 'Fishing and aquaculture'}
+                ],
+                'B': [
+                    {code: '05', ar: 'استخراج الفحم والليغنيت', en: 'Mining of coal and lignite'},
+                    {code: '06', ar: 'استخراج النفط الخام والغاز الطبيعي', en: 'Extraction of crude petroleum and natural gas'},
+                    {code: '07', ar: 'التعدين من الخامات المعدنية', en: 'Mining of metal ores'},
+                    {code: '08', ar: 'أنشطة التعدين الأخرى واستغلال المحاجر', en: 'Other mining and quarrying'},
+                    {code: '09', ar: 'الخدمات الداعمة لأنشطة التعدين', en: 'Mining support service activities'}
+                ],
+                'C': [
+                    {code: '10', ar: 'صناعة الأغذية', en: 'Manufacture of food products'},
+                    {code: '11', ar: 'صناعة المشروبات', en: 'Manufacture of beverages'},
+                    {code: '12', ar: 'صناعة التبغ', en: 'Manufacture of tobacco products'},
+                    {code: '13', ar: 'صناعة المنسوجات', en: 'Manufacture of textiles'},
+                    {code: '14', ar: 'صناعة الملابس', en: 'Manufacture of wearing apparel'},
+                    {code: '15', ar: 'صناعة الجلود والمنتجات ذات الصلة', en: 'Manufacture of leather and related products'},
+                    {code: '16', ar: 'صناعة الخشب ومنتجاته باستثناء الأثاث', en: 'Manufacture of wood and of products of wood and cork, except furniture'},
+                    {code: '17', ar: 'صناعة الورق ومنتجات الورق', en: 'Manufacture of paper and paper products'},
+                    {code: '18', ar: 'الطباعة وأنشطة خدمات الدعم المرتبطة بها', en: 'Printing and reproduction of recorded media'},
+                    {code: '19', ar: 'صناعة فحم الكوك والمنتجات النفطية المكررة', en: 'Manufacture of coke and refined petroleum products'},
+                    {code: '20', ar: 'صناعة المواد الكيميائية والمنتجات الكيميائية', en: 'Manufacture of chemicals and chemical products'},
+                    {code: '21', ar: 'صناعة المستحضرات الصيدلانية', en: 'Manufacture of basic pharmaceutical products and preparations'},
+                    {code: '22', ar: 'صناعة منتجات المطاط والبلاستيك', en: 'Manufacture of rubber and plastics products'},
+                    {code: '23', ar: 'صناعة منتجات المعادن اللافلزية الأخرى', en: 'Manufacture of other non-metallic mineral products'},
+                    {code: '24', ar: 'صناعة الفلزات الأساسية', en: 'Manufacture of basic metals'},
+                    {code: '25', ar: 'صناعة المنتجات المعدنية المصنعة (باستثناء الآلات والمعدات)', en: 'Manufacture of fabricated metal products, except machinery and equipment'},
+                    {code: '26', ar: 'صناعة الحواسيب والمنتجات الإلكترونية والبصرية', en: 'Manufacture of computer, electronic and optical products'},
+                    {code: '27', ar: 'صناعة المعدات الكهربائية', en: 'Manufacture of electrical equipment'},
+                    {code: '28', ar: 'صناعة الآلات والمعدات غير المصنفة في مكان آخر', en: 'Manufacture of machinery and equipment n.e.c.'},
+                    {code: '29', ar: 'صناعة المركبات ذات المحركات والمقطورات', en: 'Manufacture of motor vehicles, trailers and semi-trailers'},
+                    {code: '30', ar: 'صناعة معدات النقل الأخرى', en: 'Manufacture of other transport equipment'},
+                    {code: '31', ar: 'صناعة الأثاث', en: 'Manufacture of furniture'},
+                    {code: '32', ar: 'الصناعات التحويلية الأخرى', en: 'Other manufacturing'},
+                    {code: '33', ar: 'إصلاح وتركيب الآلات والمعدات', en: 'Repair and installation of machinery and equipment'}
+                ],
+                'D': [
+                    {code: '35', ar: 'إمدادات الكهرباء والغاز والبخار وتكييف الهواء', en: 'Electricity, gas, steam and air conditioning supply'}
+                ],
+                'E': [
+                    {code: '36', ar: 'إمدادات المياه', en: 'Water collection, treatment and supply'},
+                    {code: '37', ar: 'الصرف الصحي', en: 'Sewerage'},
+                    {code: '38', ar: 'جمع ومعالجة النفايات', en: 'Waste collection, treatment and disposal activities; materials recovery'},
+                    {code: '39', ar: 'أنشطة المعالجة والتصليح البيئي', en: 'Remediation activities and other waste management services'}
+                ],
+                'F': [
+                    {code: '41', ar: 'تشييد المباني', en: 'Construction of buildings'},
+                    {code: '42', ar: 'الهندسة المدنية', en: 'Civil engineering'},
+                    {code: '43', ar: 'أنشطة البناء المتخصصة', en: 'Specialized construction activities'}
+                ],
+                'G': [
+                    {code: '45', ar: 'تجارة وصيانة المركبات ذات المحركات والدراجات النارية', en: 'Wholesale and retail trade and repair of motor vehicles and motorcycles'},
+                    {code: '46', ar: 'تجارة الجملة (باستثناء المركبات)', en: 'Wholesale trade, except of motor vehicles and motorcycles'},
+                    {code: '47', ar: 'تجارة التجزئة (باستثناء المركبات)', en: 'Retail trade, except of motor vehicles and motorcycles'}
+                ],
+                'H': [
+                    {code: '49', ar: 'النقل البري وخطوط الأنابيب', en: 'Land transport and transport via pipelines'},
+                    {code: '50', ar: 'النقل المائي', en: 'Water transport'},
+                    {code: '51', ar: 'النقل الجوي', en: 'Air transport'},
+                    {code: '52', ar: 'التخزين وأنشطة الدعم للنقل', en: 'Warehousing and support activities for transportation'},
+                    {code: '53', ar: 'البريد والخدمات البريدية', en: 'Postal and courier activities'}
+                ],
+                'I': [
+                    {code: '55', ar: 'أنشطة الإقامة', en: 'Accommodation'},
+                    {code: '56', ar: 'أنشطة خدمات الطعام والمشروبات', en: 'Food and beverage service activities'}
+                ],
+                'J': [
+                    {code: '58', ar: 'النشر', en: 'Publishing activities'},
+                    {code: '59', ar: 'أنشطة الأفلام والتسجيلات', en: 'Motion picture, video and television programme production, sound recording'},
+                    {code: '60', ar: 'البث الإذاعي والتلفزيوني', en: 'Programming and broadcasting activities'},
+                    {code: '61', ar: 'الاتصالات', en: 'Telecommunications'},
+                    {code: '62', ar: 'برمجة الحواسيب والاستشارات والأنشطة ذات الصلة', en: 'Computer programming, consultancy and related activities'},
+                    {code: '63', ar: 'خدمات المعلومات الأخرى', en: 'Information service activities'}
+                ],
+                'K': [
+                    {code: '64', ar: 'الأنشطة المالية (باستثناء التأمين وصناديق المعاشات)', en: 'Financial service activities, except insurance and pension funding'},
+                    {code: '65', ar: 'التأمين وصناديق المعاشات', en: 'Insurance, reinsurance and pension funding'},
+                    {code: '66', ar: 'الأنشطة المساندة للخدمات المالية والتأمين', en: 'Activities auxiliary to financial and insurance services'}
+                ],
+                'L': [
+                    {code: '68', ar: 'الأنشطة العقارية', en: 'Real estate activities'}
+                ],
+                'M': [
+                    {code: '69', ar: 'الأنشطة القانونية والمحاسبية', en: 'Legal and accounting activities'},
+                    {code: '70', ar: 'أنشطة المقرات الرئيسية والاستشارات الإدارية', en: 'Activities of head offices; management consultancy'},
+                    {code: '71', ar: 'الهندسة والاختبارات الفنية', en: 'Architectural and engineering activities; technical testing and analysis'},
+                    {code: '72', ar: 'البحث العلمي والتطوير', en: 'Scientific research and development'},
+                    {code: '73', ar: 'الإعلان وأبحاث السوق', en: 'Advertising and market research'},
+                    {code: '74', ar: 'الأنشطة المهنية والعلمية الأخرى', en: 'Other professional, scientific and technical activities'},
+                    {code: '75', ar: 'الخدمات البيطرية', en: 'Veterinary activities'}
+                ],
+                'N': [
+                    {code: '77', ar: 'تأجير واستئجار الأصول الملموسة وغير الملموسة', en: 'Rental and leasing activities'},
+                    {code: '78', ar: 'أنشطة التوظيف', en: 'Employment activities'},
+                    {code: '79', ar: 'وكالات السفر وخدمات الحجز', en: 'Travel agency, tour operator and related activities'},
+                    {code: '80', ar: 'الأمن والتحقيق', en: 'Security and investigation activities'},
+                    {code: '81', ar: 'الخدمات المتعلقة بالمباني وتنسيق الحدائق', en: 'Services to buildings and landscape activities'},
+                    {code: '82', ar: 'الخدمات الإدارية الأخرى', en: 'Office administrative, office support and other business support activities'}
+                ],
+                'O': [
+                    {code: '84', ar: 'الإدارة العامة والدفاع والضمان الاجتماعي الإلزامي', en: 'Public administration and defence; compulsory social security'}
+                ],
+                'P': [
+                    {code: '85', ar: 'التعليم', en: 'Education'}
+                ],
+                'Q': [
+                    {code: '86', ar: 'الأنشطة الصحية', en: 'Human health activities'},
+                    {code: '87', ar: 'الرعاية في المساكن المتخصصة', en: 'Residential care activities'},
+                    {code: '88', ar: 'الرعاية الاجتماعية بدون إقامة', en: 'Social work activities without accommodation'}
+                ],
+                'R': [
+                    {code: '90', ar: 'الفنون المسرحية والإبداعية', en: 'Creative, arts and entertainment activities'},
+                    {code: '91', ar: 'المكتبات والمتاحف والأنشطة الثقافية', en: 'Libraries, archives, museums and other cultural activities'},
+                    {code: '92', ar: 'ألعاب الحظ والرهانات', en: 'Gambling and betting activities'},
+                    {code: '93', ar: 'الأنشطة الرياضية والترفيهية', en: 'Sports activities and amusement and recreation activities'}
+                ],
+                'S': [
+                    {code: '94', ar: 'أنشطة المنظمات العضوية', en: 'Activities of membership organizations'},
+                    {code: '95', ar: 'إصلاح الحواسيب والسلع الشخصية والمنزلية', en: 'Repair of computers and personal and household goods'},
+                    {code: '96', ar: 'الخدمات الشخصية الأخرى', en: 'Other personal service activities'}
+                ],
+                'T': [
+                    {code: '97', ar: 'أنشطة الأسر كأرباب عمل لخدم المنازل', en: 'Activities of households as employers of domestic personnel'},
+                    {code: '98', ar: 'إنتاج السلع والخدمات للاستخدام الذاتي', en: 'Undifferentiated goods- and services-producing activities of private households for own use'}
+                ],
+                'U': [
+                    {code: '99', ar: 'أنشطة المنظمات والهيئات الدولية', en: 'Activities of extraterritorial organizations and bodies'}
+                ]
+            };
+            
+            if (selectedSectors.length === 0) {
+                branchesGrid.innerHTML = '<p class="help-text">{% if lang == "ar" %}اختر القطاعات أولاً لعرض الفروع{% else %}Select sectors first to show branches{% endif %}</p>';
+                return;
+            }
+            
+            selectedSectors.forEach(sector => {
+                if (branches[sector]) {
+                    branches[sector].forEach(branch => {
+                        const label = document.createElement('label');
+                        label.className = 'checkbox-item';
+                        label.innerHTML = `<input type="checkbox" name="branches" value="${branch.code}"> ${branch.code} - {% if lang == "ar" %}${branch.ar}{% else %}${branch.en}{% endif %}`;
+                        branchesGrid.appendChild(label);
+                    });
+                }
+            });
         }
     </script>
 </body>
